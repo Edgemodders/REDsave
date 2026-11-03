@@ -1,0 +1,31 @@
+# build output
+dist/
+dist-test/
+out/
+node_modules/
+*.vsix
+*.tsbuildinfo
+
+# Jekyll's output, when the docs are built locally
+docs/_site/
+docs/.jekyll-cache/
+
+# never commit game files, or a player's saves: save folders, sav.dat, their metadata and
+# screenshots, or indexes and name tables built from them or from the game
+*.archive
+*.dll
+*.exe
+sav.dat
+**/ManualSave-*/
+**/AutoSave-*/
+**/QuickSave-*/
+**/PointOfNoReturnSave-*/
+**/EndGameSave-*/
+index/
+cache/
+
+# VS Code builds downloaded by a UI test
+.vscode-test/
+
+# made from CHANGELOG.md by the Docs site workflow
+docs/changelog.md

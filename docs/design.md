@@ -1,0 +1,162 @@
+---
+title: Design
+---
+
+# REDsave design
+
+Draft 1, 2026-11-03. REDsave is a VS Code extension that looks after Cyberpunk 2077's save games. It has three parts:
+
+| Part | What the player does |
+|---|---|
+| **Find** | Searches and filters every save by its title, quest, place, date, lifepath, V's body and voice, level, playthrough and the rest of what the save's metadata says |
+| **Loadouts** | Keeps sets of saves outside the game's save folder (one per playthrough, one for testing a mod) and swaps a set in before playing |
+| **Titles** | Gives a save a title of their own ("Before the heist, Takemura alive"), shown in REDsave and, if the game allows it, in the game's own load menu |
+
+Nothing in REDsave changes the game's files. It reads saves, moves save folders and, for titles, may write a save's metadata (decided after the S3 spike).
+
+## The game's save folder
+
+Steam, GOG and Epic copies of the game all save to `%USERPROFILE%\Saved Games\CD Projekt Red\Cyberpunk 2077\` (setting `redsave.savesPath` for another). Seen on the dev PC on 2026-11-03, game 2.5:
+
+| In the folder | What it is | REDsave |
+|---|---|---|
+| `ManualSave-<n>`, `AutoSave-<n>`, `QuickSave-<n>`, `PointOfNoReturnSave-<n>`, `EndGameSave-<n>` | One folder per save. The dev PC has 993 such folders (962 manual, 20 autosave, 10 quick, 1 point of no return), 970 of them saves (below) | Reads, and moves in loadouts |
+| `user.gls`, `EnabledMods.json`, `HDRUserSettings.json` | The game's settings and mod.io state, not saves | Never touched |
+| `steam_autocloud.vdf` | Steam Cloud syncs this folder | Never touched; see "Steam Cloud" |
+| Empty save folders | 23 on the dev PC: 11 autosaves from 2026-11-03 and 12 manual saves from 2024-07-24, with no files at all. Left when a save was removed (unverified by what: the game rotating autosaves, a delete in the load menu, or Steam Cloud) | Not saves: a folder counts only with `sav.dat` in it. Never moved or removed |
+
+Each save folder holds:
+
+| File | Size on the dev PC | What it is |
+|---|---|---|
+| `sav.dat` | about 5.7 MB | The save itself (binary). REDsave never reads or writes it in S1 and S2 |
+| `metadata.9.json` | about 6 KB | What the load menu shows, as JSON. The number is the format (9 in game 2.5); REDsave reads the highest one present |
+| `screenshot.png` | about 200 KB | The picture in the load menu |
+
+### What the metadata says
+
+From `metadata.9.json` of a game 2.5 autosave (`Data.metadata`). Every field here can be indexed; the third column says how REDsave uses it.
+
+| Field | Example | Used for |
+|---|---|---|
+| `name` | `AutoSave-2` | The folder's name; the kind of save (manual, auto, quick, point of no return, end of the game) |
+| `trackedQuest` | `LocKey#98600` (Clampdown) | The title, until the player gives one. Searched |
+| `mainQuest` | `LocKey#9860` | Searched; shown under the title |
+| `trackedQuestEntry` | `quests/minor_quest/mq062_clampdown/...` | The quest's id when no name can be read (`mq062_clampdown`) |
+| `locationName` | `LocKey#10963` (Little China) | Searched; filter by district |
+| `lifePath` | `Corporate` (also `Nomad`, `StreetKid`) | Filter |
+| `bodyGender`, `brainGender` | `Female`, `Female` | Filter: V's body, and V's voice (they can differ) |
+| `level`, `streetCred` | `60`, `58` | Filter by range; sort |
+| `strength`, `intelligence`, `reflexes`, `technicalAbility`, `cool` | `15`, `20`, `20`, `20`, `6` | Filter by range (the game's Body, Intelligence, Reflexes, Technical Ability, Cool); shown in the details |
+| `difficulty` | `VeryHard` | Filter |
+| `playTime`, `playthroughTime` | `448042.4` (seconds) | Shown as hours; sort; filter by range |
+| `timestampString` | `18:03:12, 3.11.2026` | The date. Its day and month order is unverified across Windows locales, so the folder's time is the fallback |
+| `playthroughID` | `658432f41d8cbcc0` | Groups saves by playthrough; filter. A playthrough has no name in the game: the player names it in REDsave |
+| `buildPatch`, `gameVersion`, `saveVersion` | `2.5`, `2500`, `277` | Filter by game version; a warning on saves from a newer game than the one installed |
+| `additionalContentIds` | `["EP1"]` | Filter: Phantom Liberty |
+| `isPointOfNoReturn`, `isEndGameSave`, `isCheckpoint`, `isForced` | `false` | Filters |
+| `isModded` | `true` | Filter |
+| `finishedQuests` | `q004 q005 ... mq041` | Search and filter by a finished quest ("saves after The Heist") |
+| `facts` | `q112_takemura_dead=0` | Advanced filter by a quest fact and its value ("Takemura alive") |
+| `activeQuests` | hashes | Not used (no names) |
+| `playerPosition` | X, Y, Z | Not used in S1; maybe a map later |
+| `userName` | empty | Unknown; a candidate for titles (S3 spike) |
+| `fileSize` | `6053063` | Shown in the details; loadout sizes |
+
+The fields' names are as the game writes them in 2.5; older saves (metadata 8 and below) may lack some, and REDsave shows those as unknown, never as false. Unverified: which fields older formats have.
+
+### Names for LocKeys
+
+`trackedQuest`, `mainQuest` and `locationName` are LocKeys. REDbridge turns them into the words the player sees, from their own copy of the game: on 2026-11-03 REDcode's `loc_get` (through REDbridge) gave `LocKey#98600` "Clampdown", `LocKey#9860` "Nocturne Op55N1", `LocKey#10963` "Little China". So:
+
+- REDsave finds REDbridge where REDnode, EDGEdeck or REDcode put it (REDnode's `packages/overlay/redbridge.js` has the lookup), and asks it for the names of the keys its saves use.
+- The names are kept in REDsave's own storage on the player's PC, never committed or shipped (game data).
+- Without REDbridge, the title is the quest's id made readable (`mq062_clampdown` as "mq062 clampdown") and the place is left out. Search still works on everything else.
+- The language: English first (`en-us`). The game's language later (unverified how REDbridge reads other languages' files).
+
+## Find (S1)
+
+A **Saves** page (a webview) and the **Saves** view in REDsave's side bar.
+
+| Piece | What it does |
+|---|---|
+| Search box | Words, matched across the title, quest, main quest, place, lifepath, the player's notes and the folder name, case and accents ignored. Several words all must match |
+| Filter chips | Lifepath, body, voice, difficulty, kind of save, playthrough, game version, Phantom Liberty, point of no return, modded. A chip shows its counts ("Corpo 412") from the saves the other filters leave |
+| Ranges | Level, Street Cred, play time, date, and the five attributes |
+| Advanced | Finished quest (by name or id) and quest fact (`q112_takemura_dead = 0`) |
+| Sort | Newest first (default), oldest, play time, level, title |
+| Group | By playthrough, with each playthrough's lifepath, V and number of saves |
+| Each save | Its picture, title, quest and place, lifepath, level, kind and date; the details (every field above) on click |
+| Search syntax | Plain words for everyone; `lifepath:corpo`, `level:>40`, `fact:q112_takemura_dead=0` typed in the box for those who want it (the chips write the same words) |
+
+The index: one pass over the save folders reads each metadata file (about 6 MB in all for 970 saves) and keeps the result in REDsave's global storage, keyed by folder, the metadata file's time and its size, so later starts read only what changed. A file watcher on the save folder picks up new saves while the game runs. Pictures are shown from the save folder itself (the webview's local resource roots), not copied. Unverified: the first pass's time on 970 saves; the target is under 2 s.
+
+Saves in loadouts (S2) are indexed the same way, and the page searches across the game's folder and every loadout, with a chip for where a save is.
+
+## Loadouts (S2)
+
+A loadout is a named set of save folders kept in REDsave's library, outside the game's save folder. One loadout is "in the game" at a time.
+
+```
+<library>/                          redsave.libraryPath; default %USERPROFILE%\Saved Games\REDsave
+  library.json                      the loadouts, which is in the game, the swap journal
+  loadouts/<id>/
+    loadout.json                    name, notes, created, the playthroughs it holds
+    ManualSave-12/                  save folders exactly as the game wrote them
+    AutoSave-3/
+  titles.json                       the player's titles and notes, by save identity (S3)
+```
+
+The default library is beside the game's save folder, on the same drive and outside the folder Steam Cloud syncs, so a swap renames folders at once. Another drive works by copying (slower, checked, then the old copy removed).
+
+### Swap rules
+
+1. **Never while the game runs.** REDsave checks for `Cyberpunk2077.exe` and refuses.
+2. **Nothing is deleted.** Before a loadout comes in, the save folders in the game's folder go to the loadout that is in the game, or to a new one named "Saved on <date>" if none is.
+3. **Only save folders move.** The game's other files in the folder (`user.gls`, `EnabledMods.json`, `HDRUserSettings.json`, `steam_autocloud.vdf`) stay.
+4. **A journal.** Each move is written to `library.json` before it is made, so a swap cut short (power off, VS Code closed) finishes or rolls back at the next start.
+5. **Copy one save in** without swapping: a save from a loadout goes into the game's folder beside the others. Two folders with the same name: the incoming one gets the next free number. Unverified: whether the metadata's `name` must then change to match the folder.
+6. **Undo** the last swap.
+
+### Steam Cloud
+
+The dev PC's save folder has `steam_autocloud.vdf`: Steam Cloud syncs it. Moving saves out of the folder may make Steam delete them from the cloud too, and moving them back uploads them again. Unverified: what Steam does with a folder changed while Steam runs but the game does not, and whether it asks about a conflict at the next start. S2's test checks it on the dev PC before any release. Until then REDsave says, at the first swap on a PC with Steam Cloud, that the saves are kept in REDsave's library and Steam's cloud copy follows the game's folder. GOG Galaxy's cloud saves are the same question (unverified).
+
+## Titles (S3)
+
+The player gives a save a title of their own. REDsave always shows it, searches it and keeps it in `titles.json` by the save's identity (`playthroughID` plus `timestampString` and `playTime`), so it follows the save into and out of loadouts.
+
+Whether the **game's** load menu can show it is open. S3a is a spike to find out, on copies of saves only:
+
+| Way | How | Risk |
+|---|---|---|
+| A. Metadata | Write the title into a field the load menu shows (`trackedQuest` with plain text in place of a LocKey, or `userName`), keeping the original in REDsave | Unverified whether the menu reads `metadata.9.json` or `sav.dat` for the list, and whether a changed field breaks the load. The cheapest if it works |
+| B. A small game-side part | A redscript (or REDnode) piece that shows REDsave's title in the load list, read from a file REDsave writes | Needs redscript and Codeware in the player's game; does not change saves |
+| C. Both | A for players without script mods, B for the rest | More to keep working |
+
+The load list is drawn by `LoadListItem` (`SetMetadata`), the save menu by `SaveGameMenuGameController`, as an earlier experiment in `../SaveTags` (redscript with Codeware, January 2026) shows. That folder's origin and licence are unknown (it calls a `NamedSavesEnv` it does not define, perhaps from another mod): read it only as a hint of where to look, and ask the owner before reusing any of it.
+
+## Phases
+
+Each phase ends with a hand test by the owner.
+
+| Phase | What |
+|---|---|
+| S0 Repo | This repo, the scaffold, the release workflow, the brand, the design |
+| S1 Find | The index, the Saves page with search, filters, ranges, sort and groups, names through REDbridge. Read only: nothing is written to the save folder |
+| S2 Loadouts | The library, swap, copy one save in, undo, the journal, the game-running check, the Steam Cloud test |
+| S3 Titles | S3a the spike (ways A and B on copies), then S3b titles in REDsave and in the game by the way chosen |
+| S4 First release | 0.1.0 on the Marketplace, Open VSX and Nexus Mods, after every hand test |
+| Later, not agreed | MCP tools for assistants (`save_search` read only, swaps asking first, as EDGEdeck's); a save loadout paired with an EDGEdeck mod loadout; notes, tags and favourites; comparing two saves' facts; clearing old autosaves into a loadout; a REDnode window in the game |
+
+## Open questions
+
+Recommendations first; to agree with the owner before the phase that needs them.
+
+| Question | Recommendation |
+|---|---|
+| The library's default place | `%USERPROFILE%\Saved Games\REDsave`: the same drive as the saves (instant moves), outside the folder Steam syncs, not under Documents (OneDrive would sync gigabytes) |
+| One loadout in the game at a time, or several | One, plus "copy one save in": simple to explain, and what a swap means |
+| Where names come from | REDbridge, found where the other EDGE tools put it; no hard dependency |
+| Titles in the game | Decide after S3a |
+| Pair save loadouts with EDGEdeck's mod loadouts | Later, through EDGEdeck's extension API (a request issue there), once both sides exist |
