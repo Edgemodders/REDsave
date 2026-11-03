@@ -87,6 +87,7 @@ A **Saves** page (a webview) and the **Saves** view in REDsave's side bar.
 | Sort | Newest first (default), oldest, play time, level, title |
 | Group | By playthrough, with each playthrough's lifepath, V and number of saves |
 | Each save | Its picture, title, quest and place, lifepath, level, kind and date; the details (every field above) on click |
+| Select | Ctrl and Shift clicks, and **Select all** for every save the search and filters leave, with the count shown. In S1 a selection can only be looked at (Show in folder); from S2 it is moved or copied to a loadout ("Adding saves to a loadout") |
 | Search syntax | Plain words for everyone; `lifepath:corpo`, `level:>40`, `fact:q112_takemura_dead=0` typed in the box for those who want it (the chips write the same words) |
 
 The index: one pass over the save folders reads each metadata file (about 6 MB in all for 970 saves) and keeps the result in REDsave's global storage, keyed by folder, the metadata file's time and its size, so later starts read only what changed. A file watcher on the save folder picks up new saves while the game runs. Pictures are shown from the save folder itself (the webview's local resource roots), not copied. Unverified: the first pass's time on 970 saves; the target is under 2 s.
@@ -109,14 +110,32 @@ A loadout is a named set of save folders kept in REDsave's library, outside the 
 
 The default library is beside the game's save folder, on the same drive and outside the folder Steam Cloud syncs, so a swap renames folders at once. Another drive works by copying (slower, checked, then the old copy removed).
 
+The loadout in the game keeps its saves in the game's save folder, where the game reads them; the others keep theirs in the library. So every save is in exactly one place, and moving a save to the loadout in the game puts it in the game's folder.
+
+### Adding saves to a loadout
+
+Saves are picked on the Saves page, which searches across the game's folder and every loadout (S1). A search or a filter, then **Select all** (or Ctrl and Shift clicks), gives a selection; the actions work on all of it at once:
+
+| Action | What it does |
+|---|---|
+| **Move to loadout...** | Picks a loadout, or a new one named from the search ("Corpo, Takemura alive"). The saves leave where they were and join it. Moving to the loadout in the game puts them in the game's folder, ready to load |
+| **Copy to loadout...** | The same, keeping the originals where they were: two copies of each save, each about 6 MB |
+| **New loadout from selection** | Move to a new loadout in one step |
+
+Examples: filter Phantom Liberty saves of one playthrough and move them all into the game's loadout before a run through Dogtown; filter every save from game versions before 2.0 and move them to an "Old saves" loadout; select the results of `fact:q112_takemura_dead=0` and copy them to a loadout for a mod test.
+
+A move asks once, with the count and where the saves go ("Move 42 saves to Dogtown run? 38 come from the game's folder, 4 from Old saves"). Moves into or out of the game's folder follow the swap rules below, so the game must be closed.
+
+Recommended: **Move** is the default (one place for each save, no doubled gigabytes), with Copy beside it.
+
 ### Swap rules
 
 1. **Never while the game runs.** REDsave checks for `Cyberpunk2077.exe` and refuses.
 2. **Nothing is deleted.** Before a loadout comes in, the save folders in the game's folder go to the loadout that is in the game, or to a new one named "Saved on <date>" if none is.
 3. **Only save folders move.** The game's other files in the folder (`user.gls`, `EnabledMods.json`, `HDRUserSettings.json`, `steam_autocloud.vdf`) stay.
 4. **A journal.** Each move is written to `library.json` before it is made, so a swap cut short (power off, VS Code closed) finishes or rolls back at the next start.
-5. **Copy one save in** without swapping: a save from a loadout goes into the game's folder beside the others. Two folders with the same name: the incoming one gets the next free number. Unverified: whether the metadata's `name` must then change to match the folder.
-6. **Undo** the last swap.
+5. **Names that clash.** Saves that come into a folder (the game's or a loadout's) where a save of the same name already is get the next free number of their kind. Unverified: whether the metadata's `name` must then change to match the folder.
+6. **Undo** the last swap or move.
 
 ### Steam Cloud
 
@@ -144,7 +163,7 @@ Each phase ends with a hand test by the owner.
 |---|---|
 | S0 Repo | This repo, the scaffold, the release workflow, the brand, the design |
 | S1 Find | The index, the Saves page with search, filters, ranges, sort and groups, names through REDbridge. Read only: nothing is written to the save folder |
-| S2 Loadouts | The library, swap, copy one save in, undo, the journal, the game-running check, the Steam Cloud test |
+| S2 Loadouts | The library, swap, moving and copying a selection of saves to a loadout, undo, the journal, the game-running check, the Steam Cloud test |
 | S3 Titles | S3a the spike (ways A and B on copies), then S3b titles in REDsave and in the game by the way chosen |
 | S4 First release | 0.1.0 on the Marketplace, Open VSX and Nexus Mods, after every hand test |
 | Later, not agreed | MCP tools for assistants (`save_search` read only, swaps asking first, as EDGEdeck's); a save loadout paired with an EDGEdeck mod loadout; notes, tags and favourites; comparing two saves' facts; clearing old autosaves into a loadout; a REDnode window in the game |
@@ -156,7 +175,8 @@ Recommendations first; to agree with the owner before the phase that needs them.
 | Question | Recommendation |
 |---|---|
 | The library's default place | `%USERPROFILE%\Saved Games\REDsave`: the same drive as the saves (instant moves), outside the folder Steam syncs, not under Documents (OneDrive would sync gigabytes) |
-| One loadout in the game at a time, or several | One, plus "copy one save in": simple to explain, and what a swap means |
+| One loadout in the game at a time, or several | One: simple to explain, and what a swap means. Saves from other loadouts join it by Move to loadout |
+| Move or copy by default when adding saves to a loadout | Move, with Copy beside it |
 | Where names come from | REDbridge, found where the other EDGE tools put it; no hard dependency |
 | Titles in the game | Decide after S3a |
 | Pair save loadouts with EDGEdeck's mod loadouts | Later, through EDGEdeck's extension API (a request issue there), once both sides exist |
