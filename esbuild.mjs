@@ -1,4 +1,5 @@
-// Bundles the extension (CommonJS, VS Code's module loader). `node esbuild.mjs --watch` rebuilds on
+// Bundles the extension (CommonJS, VS Code's module loader) and the Saves page's script (a browser
+// script with src/search.ts in it). `node esbuild.mjs --watch` rebuilds on
 // change; `--tests` bundles test/*.test.ts for `node --test "dist-test/*.test.cjs"`; `--production`
 // (vsce's prepublish) minifies, with no source maps.
 import * as esbuild from "esbuild";
@@ -20,6 +21,15 @@ const extension = {
   external: ["vscode"],
 };
 
+const page = {
+  ...common,
+  platform: "browser",
+  format: "iife",
+  target: "es2022",
+  entryPoints: ["webview/page.ts"],
+  outfile: "dist/page.js",
+};
+
 const testBuild = {
   ...common,
   platform: "node",
@@ -32,5 +42,5 @@ const testBuild = {
 };
 
 if (tests) await esbuild.build(testBuild);
-else if (watch) await (await esbuild.context(extension)).watch();
-else await esbuild.build(extension);
+else if (watch) await Promise.all([extension, page].map(async (o) => (await esbuild.context(o)).watch()));
+else await Promise.all([extension, page].map((o) => esbuild.build(o)));

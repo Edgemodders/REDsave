@@ -12,4 +12,12 @@ How to keep it (the Edgemodders convention):
 
 **New**
 
-- REDsave's side bar counts the saves in the game's save folder by kind: manual saves, autosaves, quick saves, point of no return and end of the game.
+- The Saves page: every save with its picture, title, main quest, place, lifepath, V, level, Street Cred, kind, date and play time, newest first.
+- Search saves by words (title, quest, place, lifepath, folder), and filter them with chips: lifepath, V's body, V's voice, difficulty, kind, playthrough, game version, Phantom Liberty, point of no return, modded. Each chip shows how many saves it leaves.
+- Filters typed in the search box too: ranges for level, Street Cred, play time and the five attributes (`level:>40`), dates (`date:2026-11`), finished quests (`quest:q112`) and quest facts (`fact:q112_takemura_dead=0`); a minus leaves out what matches. **Search help** on the page lists them.
+- Sort by date, play time, level or title, and group by playthrough.
+- Select saves with Ctrl and Shift clicks or **Select all**, and show them in Explorer.
+- A save's details: every field its metadata has, with its finished quests and quest facts, each one click away from a filter.
+- Quest and place names from your own copy of the game, through REDbridge (from EDGEdeck, REDcode or REDnode). Without it, saves show their quest's id.
+- The side bar: Open the Saves page, the saves by kind and the playthroughs, each opening the page with its filter.
+- New saves show while the game runs. REDsave only reads your saves.
