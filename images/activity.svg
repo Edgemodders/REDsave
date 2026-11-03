@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
-  <!-- HUD brackets, as REDcode's icon, around three save slots, the top one picked: the REDsave activity bar icon. Monochrome, uses currentColor. -->
-  <path d="M3 8V3h5"/>
-  <path d="M21 16v5h-5"/>
-  <path d="M7 8h10M7 12h10M7 16h6"/>
-  <path d="M5 8h0"/>
+  <!-- A 3.5" floppy disk: the REDsave activity bar icon. The body with its cut corner, the metal
+       shutter at the top with its window, and the label below. Monochrome, uses currentColor. -->
+  <path d="M4 3h13l3 3v15H4z"/>
+  <path d="M8 3v5h7V3"/>
+  <path d="M12.5 5v1"/>
+  <path d="M7 21v-7h10v7"/>
 </svg>
