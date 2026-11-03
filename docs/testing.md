@@ -13,6 +13,8 @@ Last updated 2026-11-03.
 | Test | Kind | Phase | Last run | Result |
 |---|---|---|---|---|
 | [Type check, build and unit tests](#type-check-build-and-unit-tests) | Automated, also on GitHub (Check) | S0 | 2026-11-03 | Pass, 4 tests |
+| Release workflow, packaging only (no box ticked) | On GitHub, publishes nothing | S0 | 2026-11-03 | Pass: the .vsix and the Nexus zip as the run's artifact (run 41738195720) |
+| `listSaves` on the dev PC's save folder | By script, read only | S0 | 2026-11-03 | 970 saves in 137 ms, each with its metadata; 23 empty save folders left out |
 
 ## Waiting for a hand test
 
