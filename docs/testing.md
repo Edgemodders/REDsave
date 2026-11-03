@@ -22,7 +22,7 @@ Last updated 2026-11-03.
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.2 (S1 Find) | [S1 Find](#s1-find) |
+| REDsave 0.0.3 (S1 Find) | [S1 Find](#s1-find) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -64,7 +64,7 @@ Each hand test lists numbered steps. Saves are the player's own work: until S2's
 
 ### S1 Find
 
-REDsave 0.0.2. In VS Code, with this repo open: `npm install` once, then **F5** (Run REDsave). The steps run in the window that opens (the Extension Development Host). The numbers below are the dev PC's on 2026-11-03; another PC shows its own.
+REDsave 0.0.3. In VS Code, with this repo open: `npm install` once, then **F5** (Run REDsave). The steps run in the window that opens (the Extension Development Host). The numbers below are the dev PC's on 2026-11-03; another PC shows its own.
 
 1. Open **REDsave** in the activity bar (the bracket icon with three lines). The **Saves** view shows **Open the Saves page** with 970 saves, the kinds with their counts (Manual saves 950, Quick saves 10, Autosaves 9, Point of no return 1) and **Playthroughs**. Open Playthroughs: five, numbered by their first save, such as "1: Corpo, female V" with 828.
 2. Click **Open the Saves page**. A Saves tab opens with every save, newest first, each with its picture, title, main quest and place, lifepath, V, level, Street Cred, kind, date and play time. Within about 5 seconds the bottom line says **Names from your game, through REDbridge 0.11.0** and the titles are quest names such as **Clampdown**, not ids such as "mq062 clampdown".
