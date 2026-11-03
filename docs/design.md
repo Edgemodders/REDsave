@@ -119,14 +119,13 @@ Saves are picked on the Saves page, which searches across the game's folder and 
 | Action | What it does |
 |---|---|
 | **Move to loadout...** | Picks a loadout, or a new one named from the search ("Corpo, Takemura alive"). The saves leave where they were and join it. Moving to the loadout in the game puts them in the game's folder, ready to load |
-| **Copy to loadout...** | The same, keeping the originals where they were: two copies of each save, each about 6 MB |
 | **New loadout from selection** | Move to a new loadout in one step |
 
-Examples: filter Phantom Liberty saves of one playthrough and move them all into the game's loadout before a run through Dogtown; filter every save from game versions before 2.0 and move them to an "Old saves" loadout; select the results of `fact:q112_takemura_dead=0` and copy them to a loadout for a mod test.
+Examples: filter Phantom Liberty saves of one playthrough and move them all into the game's loadout before a run through Dogtown; filter every save from game versions before 2.0 and move them to an "Old saves" loadout; select the results of `fact:q112_takemura_dead=0` and move them to a loadout for a mod test.
 
 A move asks once, with the count and where the saves go ("Move 42 saves to Dogtown run? 38 come from the game's folder, 4 from Old saves"). Moves into or out of the game's folder follow the swap rules below, so the game must be closed.
 
-Decided with the owner on 2026-11-03: **Move** is the default (one place for each save, no doubled gigabytes), with Copy beside it.
+Decided with the owner on 2026-11-03: saves are only **moved**, so each save is in one place. There is no Copy for now; copies, perhaps by hard link, are a research item for later ("Later: copies by hard link").
 
 ### Swap rules
 
@@ -140,6 +139,20 @@ Decided with the owner on 2026-11-03: **Move** is the default (one place for eac
 ### Steam Cloud
 
 The dev PC's save folder has `steam_autocloud.vdf`: Steam Cloud syncs it. Moving saves out of the folder may make Steam delete them from the cloud too, and moving them back uploads them again. Unverified: what Steam does with a folder changed while Steam runs but the game does not, and whether it asks about a conflict at the next start. S2's test checks it on the dev PC before any release. Until then REDsave says, at the first swap on a PC with Steam Cloud, that the saves are kept in REDsave's library and Steam's cloud copy follows the game's folder. GOG Galaxy's cloud saves are the same question (unverified).
+
+### Later: copies by hard link
+
+A research item, not scheduled (the owner, 2026-11-03: build with Move only, keep this in the notes). A copy of a save in a second loadout could be a set of hard links to the same files, so it takes no extra space, as EDGEdeck deploys mods by hard link.
+
+| Point | What is known |
+|---|---|
+| Folders | Only files link, not folders: each save is 3 files (`sav.dat`, `metadata.<n>.json`, `screenshot.png`), so about 2,900 links for 970 saves |
+| Drives | Links work only on the same NTFS drive; another drive needs real copies |
+| The game saving over a linked save | **Unknown, and it decides the idea.** If the game rewrites `sav.dat` in place, every linked copy changes with it, which a copy must not do. If it writes a new file and replaces the old one, the link breaks quietly and each copy keeps its own version |
+| The game deleting a linked save (autosave rotation, Delete in the load menu) | Only that link goes; the other copies keep the save |
+| Steam Cloud | Sees plain files |
+
+The first step is a short test with a throwaway save: make a new manual save, link its three files into a test folder, save over it in the game, then check with `fsutil hardlink list <file>` whether the files are still linked and which version each name shows. If the game writes in place, copies stay real copies (about 6 MB each), or are not offered.
 
 ## Titles (S3)
 
@@ -163,10 +176,10 @@ Each phase ends with a hand test by the owner.
 |---|---|
 | S0 Repo | This repo, the scaffold, the release workflow, the brand, the design |
 | S1 Find | The index, the Saves page with search, filters, ranges, sort and groups, names through REDbridge. Read only: nothing is written to the save folder |
-| S2 Loadouts | The library, swap, moving and copying a selection of saves to a loadout, undo, the journal, the game-running check, the Steam Cloud test |
+| S2 Loadouts | The library, swap, moving a selection of saves to a loadout, undo, the journal, the game-running check, the Steam Cloud test |
 | S3 Titles | S3a the spike (ways A and B on copies), then S3b titles in REDsave and in the game by the way chosen |
 | S4 First release | 0.1.0 on the Marketplace, Open VSX and Nexus Mods, after every hand test |
-| Later, not agreed | MCP tools for assistants (`save_search` read only, swaps asking first, as EDGEdeck's); a save loadout paired with an EDGEdeck mod loadout; notes, tags and favourites; comparing two saves' facts; clearing old autosaves into a loadout; a REDnode window in the game |
+| Later, not agreed | Copies of saves, perhaps by hard link ("Later: copies by hard link"); MCP tools for assistants (`save_search` read only, swaps asking first, as EDGEdeck's); a save loadout paired with an EDGEdeck mod loadout; notes, tags and favourites; comparing two saves' facts; clearing old autosaves into a loadout; a REDnode window in the game |
 
 ## Open questions
 
