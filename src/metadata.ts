@@ -116,7 +116,8 @@ export function recordFrom(json: unknown, folder: SaveFolder, where: string, fil
     facts: Array.isArray(m.facts) ? m.facts.filter((f): f is string => typeof f === "string") : [],
     fileSize: num(m.fileSize),
     screenshot,
-    metadataFile: folder.metadataFile && path.basename(folder.metadataFile),
+    // either slash: the Check workflow runs the tests on Linux with Windows paths
+    metadataFile: folder.metadataFile?.split(/[\/]/).pop(),
   };
 }
 
