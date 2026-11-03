@@ -94,7 +94,7 @@ The index: one pass over the save folders reads each metadata file (about 6 MB i
 
 ### S1: built
 
-REDsave 0.0.3, built on 2026-11-03, awaiting the owner's hand test ([Tests](testing.html), "S1 Find").
+REDsave 0.0.4, built on 2026-11-03, awaiting the owner's hand test ([Tests](testing.html), "S1 Find").
 
 | File | What it does |
 |---|---|

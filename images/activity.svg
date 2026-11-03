@@ -1,8 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
-  <!-- A 3.5" floppy disk: the REDsave activity bar icon. The body with its cut corner, the metal
-       shutter at the top with its window, and the label below. Monochrome, uses currentColor. -->
-  <path d="M4 3h13l3 3v15H4z"/>
-  <path d="M8 3v5h7V3"/>
-  <path d="M12.5 5v1"/>
-  <path d="M7 21v-7h10v7"/>
+  <!-- HUD brackets, as REDcode's, EDGEdeck's and EDGEwave's icons, around a 3.5" floppy disk: the
+       REDsave activity bar icon. The disk (body with its cut corner, shutter and window, label) is
+       drawn at 1.5 so its parts stay open at 24 px. Monochrome, uses currentColor. -->
+  <path d="M3 8V3h5"/>
+  <path d="M21 16v5h-5"/>
+  <g stroke-width="1.5">
+    <path d="M7 7h7.5l2.5 2.5V17H7z"/>
+    <path d="M9.5 7v3h4.5V7"/>
+    <path d="M12.5 8v.5"/>
+    <path d="M9 17v-3.5h6V17"/>
+  </g>
 </svg>

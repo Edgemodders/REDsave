@@ -16,7 +16,7 @@ As of 2026-11-03. Nothing is released yet. Each phase ends with a hand test by t
 | Phase | Status |
 |---|---|
 | S0 Repo | Done 2026-11-03: the scaffold, the release workflow, the brand and the design |
-| S1 Find | Built 2026-11-03 (REDsave 0.0.3): search, filters, sort, groups, selection, details and names; awaiting the hand test |
+| S1 Find | Built 2026-11-03 (REDsave 0.0.4): search, filters, sort, groups, selection, details and names; awaiting the hand test |
 | S2 Loadouts | Not started |
 | S3 Titles | Not started |
 | S4 First release | Not started |
