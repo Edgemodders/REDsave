@@ -117,7 +117,7 @@ export function recordFrom(json: unknown, folder: SaveFolder, where: string, fil
     fileSize: num(m.fileSize),
     screenshot,
     // either slash: the Check workflow runs the tests on Linux with Windows paths
-    metadataFile: folder.metadataFile?.split(/[\/]/).pop(),
+    metadataFile: folder.metadataFile?.split(/[\\/]/).pop(),
   };
 }
 
