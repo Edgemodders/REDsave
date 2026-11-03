@@ -126,7 +126,7 @@ Examples: filter Phantom Liberty saves of one playthrough and move them all into
 
 A move asks once, with the count and where the saves go ("Move 42 saves to Dogtown run? 38 come from the game's folder, 4 from Old saves"). Moves into or out of the game's folder follow the swap rules below, so the game must be closed.
 
-Recommended: **Move** is the default (one place for each save, no doubled gigabytes), with Copy beside it.
+Decided with the owner on 2026-11-03: **Move** is the default (one place for each save, no doubled gigabytes), with Copy beside it.
 
 ### Swap rules
 
@@ -176,7 +176,6 @@ Recommendations first; to agree with the owner before the phase that needs them.
 |---|---|
 | The library's default place | `%USERPROFILE%\Saved Games\REDsave`: the same drive as the saves (instant moves), outside the folder Steam syncs, not under Documents (OneDrive would sync gigabytes) |
 | One loadout in the game at a time, or several | One: simple to explain, and what a swap means. Saves from other loadouts join it by Move to loadout |
-| Move or copy by default when adding saves to a loadout | Move, with Copy beside it |
 | Where names come from | REDbridge, found where the other EDGE tools put it; no hard dependency |
 | Titles in the game | Decide after S3a |
 | Pair save loadouts with EDGEdeck's mod loadouts | Later, through EDGEdeck's extension API (a request issue there), once both sides exist |
