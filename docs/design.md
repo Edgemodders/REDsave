@@ -83,14 +83,40 @@ A **Saves** page (a webview) and the **Saves** view in REDsave's side bar.
 | Search box | Words, matched across the title, quest, main quest, place, lifepath, the player's notes and the folder name, case and accents ignored. Several words all must match |
 | Filter chips | Lifepath, body, voice, difficulty, kind of save, playthrough, game version, Phantom Liberty, point of no return, modded. A chip shows its counts ("Corpo 412") from the saves the other filters leave |
 | Ranges | Level, Street Cred, play time, date, and the five attributes |
-| Advanced | Finished quest (by name or id) and quest fact (`q112_takemura_dead = 0`) |
+| Advanced | Finished quest (by id; quest names for these ids are not read yet) and quest fact (`q112_takemura_dead=0`) |
 | Sort | Newest first (default), oldest, play time, level, title |
 | Group | By playthrough, with each playthrough's lifepath, V and number of saves |
 | Each save | Its picture, title, quest and place, lifepath, level, kind and date; the details (every field above) on click |
-| Select | Ctrl and Shift clicks, and **Select all** for every save the search and filters leave, with the count shown. In S1 a selection can only be looked at (Show in folder); from S2 it is moved or copied to a loadout ("Adding saves to a loadout") |
+| Select | Ctrl and Shift clicks, and **Select all** for every save the search and filters leave, with the count shown. In S1 a selection can only be looked at (Show in folder); from S2 it is moved to a loadout ("Adding saves to a loadout") |
 | Search syntax | Plain words for everyone; `lifepath:corpo`, `level:>40`, `fact:q112_takemura_dead=0` typed in the box for those who want it (the chips write the same words) |
 
-The index: one pass over the save folders reads each metadata file (about 6 MB in all for 970 saves) and keeps the result in REDsave's global storage, keyed by folder, the metadata file's time and its size, so later starts read only what changed. A file watcher on the save folder picks up new saves while the game runs. Pictures are shown from the save folder itself (the webview's local resource roots), not copied. Unverified: the first pass's time on 970 saves; the target is under 2 s.
+The index: one pass over the save folders reads each metadata file (about 6 MB in all for 970 saves) and keeps the result in REDsave's global storage, keyed by folder, the metadata file's time and its size, so later starts read only what changed. A file watcher on the save folder picks up new saves while the game runs. Pictures are shown from the save folder itself (the webview's local resource roots), not copied. Measured on the dev PC on 2026-11-03: the first pass over 970 saves takes 384 ms, a start from the cache 196 ms.
+
+### S1: built
+
+REDsave 0.0.2, built on 2026-11-03, awaiting the owner's hand test ([Tests](testing.html), "S1 Find").
+
+| File | What it does |
+|---|---|
+| `src/metadata.ts` | A save's metadata into a `SaveRecord`: every field in the table above, the timestamp parsed as time then day.month.year (the file's time when it has another shape), the quest id from `trackedQuestEntry`, a `problem` for a broken file |
+| `src/index.ts` | `SaveIndex`: the records kept in global storage (`index.json`), keyed by folder and stamped by the metadata's, `sav.dat`'s and the picture's times and sizes; a watcher on the save folder rescans 1.5 s after the game stops writing |
+| `src/names.ts` | `Names`: finds REDbridge (REDnode's, EDGEdeck's and REDcode's copies, the newest first) and .NET 10, starts it with `--game`, calls `loc.get` in batches of 500, keeps the names in `names-en-us.json`, stops REDbridge after 2 minutes idle |
+| `src/game.ts` | The game folder: the `redsave.gamePath` setting, EDGEdeck's when it runs, else Steam, GOG or Epic (from EDGEdeck's lookup) |
+| `src/search.ts` | The search box's words and `key:value` filters, chips with their counts, ranges, dates, quests, facts, sort, playthroughs. Shared by the page and the tests |
+| `src/page.ts`, `webview/page.ts`, `media/page.css` | The Saves page: the box, the chips (a key shows when its saves differ: on the dev PC difficulty, Phantom Liberty and modded are hidden, since every save has the same value), sort, By playthrough, the list with pictures, selection, the details with clickable quests and facts, the names' status |
+| `src/extension.ts` | The side bar: Open the Saves page, the kinds and the playthroughs, each opening the page with its filter |
+
+The filters as built: `lifepath:` (corpo, nomad, streetkid), `gender:` (V's body, female or male), `voice:`, `difficulty:`, `kind:` (manual, auto, quick, ponr, endgame), `playthrough:<number>`, `version:`, `pl:`, `ponr:`, `modded:` (yes or no); ranges `level:`, `cred:`, `hours:`, and the attributes `body:`, `int:`, `ref:`, `tech:`, `cool:` (`>40`, `<20`, `30-50`, `42`); `date:2026-11`, `date:>2026-10-01`; `quest:<id>`; `fact:<name>=<value>`; `-` before any of them leaves out what matches. Playthroughs are numbered by their first save.
+
+Seen on the dev PC's 970 saves (2026-11-03, read only):
+
+| Finding | Detail |
+|---|---|
+| Formats | Every save is `metadata.9.json`, from game 2.1 to 2.5 |
+| Timestamps | All 970 read as time then day.month.year, and match `sav.dat`'s time |
+| Playthroughs | 5: Corpo female V (828 saves), Corpo male V (118), Street Kid female V (22), two Nomad female V (1 each) |
+| Names | REDbridge 0.11.0 (EDGEdeck's copy) gave the 126 LocKeys in 4.5 s the first time; 2 have no text. Later starts read them from the store |
+| Searches | 3 to 53 ms each over 970 saves (the fact filter is the slowest) |
 
 Saves in loadouts (S2) are indexed the same way, and the page searches across the game's folder and every loadout, with a chip for where a save is.
 
@@ -181,14 +207,20 @@ Each phase ends with a hand test by the owner.
 | S4 First release | 0.1.0 on the Marketplace, Open VSX and Nexus Mods, after every hand test |
 | Later, not agreed | Copies of saves, perhaps by hard link ("Later: copies by hard link"); MCP tools for assistants (`save_search` read only, swaps asking first, as EDGEdeck's); a save loadout paired with an EDGEdeck mod loadout; notes, tags and favourites; comparing two saves' facts; clearing old autosaves into a loadout; a REDnode window in the game |
 
-## Open questions
+## Decisions and open questions
 
-Recommendations first; to agree with the owner before the phase that needs them.
+Decided with the owner on 2026-11-03:
 
-| Question | Recommendation |
+| Question | Decision |
 |---|---|
 | The library's default place | `%USERPROFILE%\Saved Games\REDsave`: the same drive as the saves (instant moves), outside the folder Steam syncs, not under Documents (OneDrive would sync gigabytes) |
 | One loadout in the game at a time, or several | One: simple to explain, and what a swap means. Saves from other loadouts join it by Move to loadout |
+| Adding saves to a loadout | Move only; copies (perhaps by hard link) are a research item |
 | Where names come from | REDbridge, found where the other EDGE tools put it; no hard dependency |
+
+Still open:
+
+| Question | Recommendation |
+|---|---|
 | Titles in the game | Decide after S3a |
 | Pair save loadouts with EDGEdeck's mod loadouts | Later, through EDGEdeck's extension API (a request issue there), once both sides exist |

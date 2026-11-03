@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://edgemodders.github.io/REDsave/"><img src="docs/assets/brand/badges/docs.svg" alt="docs: read the docs"></a>
-  <img src="docs/assets/brand/badges/status.svg" alt="status: S0 scaffold">
+  <img src="docs/assets/brand/badges/status.svg" alt="status: S1 find">
   <img src="docs/assets/brand/badges/game.svg" alt="game: Cyberpunk 2077">
   <img src="docs/assets/brand/badges/vscode.svg" alt="runs in: VS Code">
   <a href="LICENSE"><img src="docs/assets/brand/badges/license.svg" alt="license: MIT"></a>
@@ -19,13 +19,14 @@ A save game manager for Cyberpunk 2077, as a VS Code extension. Hundreds of save
 **[Docs](https://edgemodders.github.io/REDsave/)** &middot; [Design](docs/design.md) &middot; [Changelog](CHANGELOG.md) &middot; [Tests](docs/testing.md)
 
 > [!NOTE]
-> **Status: S0 scaffold, not released yet.** The repo, the release workflow, the brand and the design are in place (2026-11-03). Next is S1, finding saves: the index of every save's metadata and the Saves page with search and filters. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
+> **Status: S1 Find built, not released yet.** REDsave 0.0.2 (2026-11-03) finds saves: the Saves page with search, filter chips, ranges, sort, groups by playthrough, selection and every save's details, with quest and place names through REDbridge. It awaits its hand test. Next is S2, loadouts. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
 
 ## Repo layout
 
 | Folder | What |
 |---|---|
-| `src/` | The extension. `saves.ts` reads the game's save folder |
+| `src/` | The extension: `saves.ts` and `metadata.ts` read the save folder, `index.ts` keeps the index, `search.ts` the search and filters, `names.ts` asks REDbridge for names, `page.ts` the Saves page |
+| `webview/`, `media/` | The Saves page's script and styles |
 | `test/` | Unit tests, `npm test` |
 | `docs/` | The docs site, published at https://edgemodders.github.io/REDsave/ |
 | `nexus/` | The Nexus Mods page's source and upload settings |
