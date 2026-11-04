@@ -45,8 +45,12 @@ export const difficultyLabel = (v?: string) => (v ? spaced(v) : "Unknown");
 /** A quest id made readable: "mq062_clampdown" to "mq062 clampdown". */
 export const readableId = (id: string) => id.replace(/_/g, " ");
 
-/** What a save is called: its quest's name, else its quest id made readable, else its kind. */
+/**
+ * What a save is called: its quest's name, else its quest id made readable, else its kind. A
+ * trackedQuest that is not a LocKey is a title written as plain text (S3), shown as it is.
+ */
 export function titleOf(r: SaveRecord, nameOf: NameOf): string {
+  if (r.trackedQuest && !/^LocKey#/i.test(r.trackedQuest)) return r.trackedQuest;
   return nameOf(r.trackedQuest) ?? (r.questId ? readableId(r.questId) : kindLabel(r.kind));
 }
 

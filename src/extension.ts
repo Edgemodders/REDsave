@@ -13,10 +13,12 @@ import { SaveIndex } from "./index";
 import { Names } from "./names";
 import { findGame, launchTarget } from "./game";
 import { SavesPage } from "./page";
-import { playthroughLabel, playthroughsOf } from "./search";
+import { playthroughLabel, playthroughsOf, titleOf } from "./search";
 import { defaultLibraryPath, Library, within } from "./library";
 import { gameRunning, Place, planMove, planSwap, recover, runMove, undoPlan } from "./move";
 import type { SaveRecord } from "./metadata";
+import { makeSpikeCopies } from "./titlespike";
+
 
 const KIND_WORDS: Record<SaveKind, string> = { manual: "manual", auto: "auto", quick: "quick", pointOfNoReturn: "ponr", endGame: "endgame" };
 
@@ -411,6 +413,53 @@ export function activate(context: vscode.ExtensionContext): void {
     child.unref();
   }
 
+  /** S3a: two test copies of a save, to see in the game which title shows (titlespike.ts). */
+  async function titleSpike(): Promise<void> {
+    if (busy) return void vscode.window.showWarningMessage("REDsave is moving saves. Try again when it has finished.");
+    if (await gameRunning()) return void vscode.window.showWarningMessage("Cyberpunk 2077 is running. Close the game first: the copies go into its save folder.");
+    const nameOf = (k?: string) => (k ? names.known[k] ?? undefined : undefined);
+    const recent = records.filter((r) => r.where === "game" && r.metadataFile && !r.problem && /^LocKey#/i.test(r.trackedQuest ?? "")).sort((a, b) => b.time - a.time).slice(0, 15);
+    if (!recent.length) return void vscode.window.showInformationMessage("No save in the game's folder to copy.");
+    const pick = await vscode.window.showQuickPick(
+      recent.map((r) => ({ label: titleOf(r, nameOf), description: `${r.name} · ${new Date(r.time).toLocaleString()}`, r })),
+      { title: "Title spike: copy which save?", placeHolder: "Two copies of it go into the game's save folder; it is not changed" },
+    );
+    if (!pick) return;
+    const quest = nameOf(pick.r.trackedQuest) ?? pick.r.questId ?? "Save";
+    const ok = await vscode.window.showWarningMessage(`Make two test copies of ${pick.r.name}?`, {
+      modal: true,
+      detail: `Copy A has ${`its quest title as the plain text "${quest}: REDsave test A"`}. Copy B has its empty userName field as "REDsave test B". They go into the game's save folder as new saves with the next free numbers, beside the original, which is not changed. Title Spike: Put the Test Copies Away moves them into a loadout afterwards.`,
+    }, "Make the copies");
+    if (ok !== "Make the copies") return;
+    try {
+      const made = makeSpikeCopies(pick.r.dir, pick.r.metadataFile!, quest);
+      const all = [...(context.globalState.get<string[]>("redsave.titleSpike") ?? []), ...made.map((m) => m.dir)];
+      await context.globalState.update("redsave.titleSpike", all);
+      for (const m of made) log.appendLine(`Title spike: copy ${m.variant} of ${pick.r.name} as ${path.basename(m.dir)}: ${m.what}`);
+      scan();
+      void vscode.window.showInformationMessage(`Made the test copies: A is ${path.basename(made[0].dir)}, B is ${path.basename(made[1].dir)}. In the game's Load Game they sit beside ${pick.r.name} (same date and time).`);
+    } catch (err) {
+      void vscode.window.showErrorMessage(`REDsave could not make the copies: ${(err as Error).message}`);
+    }
+  }
+
+  /** S3a: the spike's copies go into a loadout, Title spike (nothing deleted). */
+  async function titleSpikeAway(): Promise<void> {
+    const dirs = (context.globalState.get<string[]>("redsave.titleSpike") ?? []).filter((d) => records.some((r) => r.dir === d && r.where === "game"));
+    if (!dirs.length) {
+      await context.globalState.update("redsave.titleSpike", []);
+      return void vscode.window.showInformationMessage("No title spike copies are in the game's folder.");
+    }
+    let target = library.loadouts.find((l) => l.name === "Title spike")?.id;
+    if (!target) {
+      const problem = placesProblem();
+      if (problem) return void vscode.window.showErrorMessage(problem);
+      target = library.create("Title spike").id;
+    }
+    await moveSaves(dirs, target, "");
+    if (!records.some((r) => dirs.includes(r.dir))) await context.globalState.update("redsave.titleSpike", []);
+  }
+
   async function newLoadout(suggested?: string): Promise<string | undefined> {
     const problem = placesProblem();
     if (problem) return void vscode.window.showErrorMessage(problem);
@@ -435,6 +484,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("redsave.openPage", (query?: string) => mainPage.show(typeof query === "string" ? query : undefined)),
     vscode.commands.registerCommand("redsave.refresh", () => scan()),
     vscode.commands.registerCommand("redsave.runGame", () => runGame()),
+    vscode.commands.registerCommand("redsave.titleSpike", () => titleSpike()),
+    vscode.commands.registerCommand("redsave.titleSpikeAway", () => titleSpikeAway()),
     vscode.commands.registerCommand("redsave.openSavesFolder", openFolder),
     vscode.commands.registerCommand("redsave.newLoadout", async () => {
       const id = await newLoadout();
