@@ -163,7 +163,7 @@ Check for 0.0.8, on the library as the second run left it:
 
 REDsave 0.0.9. Install `redsave-0.0.9.vsix` over 0.0.8. Part A runs on the test copy; part B uses the game and one throwaway save in your real save folder.
 
-**Part A: swaps, on the test copy.** In VS Code's settings set **REDsave: Saves Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\saves` and **REDsave: Library Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\library`.
+**Part A: swaps, on the test copy.** In VS Code's settings (Ctrl+,, the **User** tab: a value under Workspace applies only while that folder is open) set **REDsave: Saves Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\saves` and **REDsave: Library Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\library`.
 
 0. Check the settings took: open the **Saves page**; its bottom line must start with `C:\Users\VYRAL\Saved Games\REDsave-test\saves` and say 60 saves, and **Loadouts** in the side bar must say "none yet" (your real library has Street Kid and Corpo Male V Saves: seeing them means the Library Path is not in effect). If either is wrong, stop and tell Claude.
 1. Make a loadout `Dogtown run`, and with **Add saves...** add the 13 `gender:male` saves to it.
@@ -172,7 +172,7 @@ REDsave 0.0.9. Install `redsave-0.0.9.vsix` over 0.0.8. Part A runs on the test 
 4. Open **Saved on 2026-11-03** and press **Swap in** in its tab's header. The question says the 13 saves in the game go to Dogtown run and its 47 come in: **Swap in**. In the game says "47 · Saved on 2026-11-03".
 5. Right-click **Loadouts**, **Undo the Last Move**: "Undo: Swap in Saved on 2026-11-03?", **Undo**. In the game says "13 · Dogtown run" again, and Saved on 2026-11-03 has 47.
 6. On the **Saves page**, select one save in Saved on 2026-11-03 and press **Move to loadout...**: the list shows **In the game** with "Dogtown run" in its description, and Dogtown run is not listed a second time. Choose In the game, **Move**: Dogtown run (in the game) has 14.
-7. Clear both settings. The bottom line of the Saves page shows your real save folder again.
+7. Empty both settings: in Settings (Ctrl+,), search `redsave` and delete the text in **REDsave: Saves Path** and **REDsave: Library Path**, leaving both boxes empty, so REDsave goes back to your real save folder and `Saved Games\REDsave`. The bottom line of the Saves page shows your real save folder again, and Loadouts shows Street Kid and Corpo Male V Saves.
 
 **Part B: Steam Cloud and a renumbered save, with the game and your real save folder.** It needs about 12 to 16 GB of RAM. Your two loadouts (Street Kid, Corpo Male V Saves) hold 75 real saves outside the game's folder: Steam Cloud may drop its cloud copies of them when the game starts (part B finds out what it does). To avoid that, move them back into the game first with **Move all to...**; otherwise leave them.
 
