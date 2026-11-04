@@ -172,18 +172,22 @@ Proposed on 2026-11-03, to agree with the owner. S2 is the first phase that move
 
 | Part | What | Tested on |
 |---|---|---|
-| **S2a Library and Move** | The library, loadouts in the side bar, the **Where** chip on the Saves page, **Move to loadout...** and **New loadout from selection** for a selection, the journal, undo, the game-running check | A copy of some saves (`redsave.savesPath` and `redsave.libraryPath` pointed at test folders) |
+| **S2a Library and Move** | The library, the Loadouts node and its children, a tab per loadout with **Add saves...** and **Move to...**, the **Where** chip and **Move to loadout...** on the Saves page, the journal, undo, the game-running check | A copy of some saves (`redsave.savesPath` and `redsave.libraryPath` pointed at test folders) |
 | **S2b Swap** | **Swap in** a whole loadout, the Steam Cloud explanation, renumbered folders checked in the game | The real save folder, after S2a passes, with a throwaway save for the Steam Cloud check |
 
 #### What the player sees
 
+The owner's approach (2026-11-03): loadouts are children of a **Loadouts** node in REDsave's side bar, and clicking one opens a tab for just that loadout, where saves are added to it. Decided the same day: one level of loadouts to start with; folders of loadouts are decided after some testing.
+
 | Where | What |
 |---|---|
-| Side bar, **Loadouts** view | **In the game**: the saves in the game's folder and the loadout they belong to ("Main playthrough", or "not in a loadout yet"). Below it, each loadout with its number of saves. A loadout's menu: **Swap in** (S2b), **Show on the Saves page**, **Rename**, **Notes**, **Open its folder**, **Remove** (only an empty one) |
-| Saves page | A **Where** chip row: In the game, then each loadout, with counts (`where:game`, `where:"Dogtown run"` in the box). The selection line gets **Move to loadout...** beside Show in folder |
-| Move to loadout... | A pick list of the loadouts, In the game, and **New loadout...** (named from the search by default, such as "Corpo, Takemura alive"). Then one question with the counts: "Move 42 saves to Dogtown run? 38 from the game's folder, 4 from Old saves." |
+| Side bar, **Loadouts** node | Its **+** makes a new loadout: the player types its name and it becomes a child. Each child shows its number of saves; the one the game's saves belong to is marked "in the game". A child's menu: **Rename**, **Notes**, **Swap in** (S2b), **Open its folder**, **Remove** (only an empty one). Above the Loadouts node, **In the game** shows the saves in the game's folder and which loadout they belong to, or "not in a loadout yet" |
+| A loadout's tab | Opened by clicking the loadout: its name, notes, count and size at the top, with **Swap in** (S2b); its saves below, with the Saves page's search, chips, sort and details. Selecting some of its saves gives **Move to...**: to the game or another loadout |
+| **Add saves...** in a loadout's tab | Switches the tab to a picker of every save not in this loadout (the game's folder and the other loadouts), with the full search and filters. Filter, **Select all** or pick by hand, then **Add 42 to Dogtown run** |
+| The Saves page | A **Where** chip row: In the game, then each loadout, with counts (`where:game`, `where:"Dogtown run"` in the box). The selection line gets **Move to loadout...** beside Show in folder, a shortcut for saves found there first |
+| Each move | One question with the counts before anything moves: "Move 42 saves to Dogtown run? 38 from the game's folder, 4 from Old saves." The same move, checks and undo whichever way it is started |
 | Swap in (S2b) | "Swap in Dogtown run? The 812 saves in the game go to Main playthrough, and Dogtown run's 42 come in." With no loadout in the game yet, it asks for a name for the saves there first ("Saved on 2026-11-03" by default) |
-| Undo | **Undo the last move** in the Loadouts view's menu and in a notice after each move, for the last move or swap |
+| Undo | **Undo the last move** in the Loadouts node's menu and in a notice after each move, for the last move or swap |
 
 #### How a move works
 
