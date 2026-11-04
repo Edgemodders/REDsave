@@ -20,7 +20,7 @@ Last updated 2026-11-03.
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
-| [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | | To run |
+| [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | 2026-11-03 | Pass, 3 steps |
 | [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Pass: part A (steps 0 to 7) and part B (Steam Cloud quiet, a renumbered save loads) |
 | [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
 
@@ -28,7 +28,7 @@ Last updated 2026-11-03.
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.10 (Run Game) | [Run Game (0.0.10)](#run-game-0010) |
+| None | |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -201,3 +201,5 @@ Asked for by the owner on 2026-11-03: a play button at the top of REDsave's side
 1. The REDsave view's title bar shows a play icon first, with the tooltip **Run Game**.
 2. With the game closed, press it. With EDGEdeck installed, it runs EDGEdeck's Run game: any pending mod changes deploy first, then Steam starts the game. (Without EDGEdeck, Steam starts it with `-modded`.)
 3. With the game running, press it again: "Cyberpunk 2077 is already running." Quit the game.
+
+**Result, 2026-11-03:** all 3 steps passed.
