@@ -129,16 +129,6 @@
         "title": "Swap In",
         "category": "REDsave",
         "icon": "$(arrow-swap)"
-      },
-      {
-        "command": "redsave.titleSpike",
-        "title": "Title Spike: Make Test Copies",
-        "category": "REDsave"
-      },
-      {
-        "command": "redsave.titleSpikeAway",
-        "title": "Title Spike: Put the Test Copies Away",
-        "category": "REDsave"
       }
     ],
     "menus": {

@@ -22,6 +22,8 @@ defaults:
 nav:
   - title: Docs
     url: /
+  - title: Player guide
+    url: /guide.html
   - title: Design
     url: /design.html
   - title: Tests

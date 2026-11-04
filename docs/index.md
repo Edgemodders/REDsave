@@ -4,6 +4,7 @@ REDsave is a VS Code extension that looks after Cyberpunk 2077's save games. Fin
 
 | Document | What it covers |
 |---|---|
+| [Player guide](guide.html) | Installing REDsave, finding saves, loadouts and swaps, titles, Run Game, the settings |
 | [Design](design.html) | How REDsave works: the save folder and what each save's metadata says, search and filters, loadouts and the swap rules, titles, the phases and the open questions |
 | [Tests](testing.html) | Every test, with its steps for running again |
 | [Dev setup](dev-setup.html) | Building, packaging and releasing REDsave |

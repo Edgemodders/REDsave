@@ -8,11 +8,17 @@
 // nothing else, through a temporary file, with the file's time kept.
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { setField } from "./titlespike";
 import { ORIGINAL_PREFIX, originalOf } from "./metadata";
 
 export { ORIGINAL_PREFIX, originalOf };
 export const MAX_TITLE = 120;
+
+/** A metadata file's text with one string field's value replaced; the rest left byte for byte. */
+export function setField(text: string, field: string, value: string): string {
+  const re = new RegExp(`("${field}"\\s*:\\s*)"(?:[^"\\\\]|\\\\.)*"`);
+  if (!re.test(text)) throw new Error(`The metadata has no ${field} field`);
+  return text.replace(re, (_, head: string) => head + JSON.stringify(value));
+}
 
 /** What a title may be: one line, not empty, at most 120 characters. Undefined when fine. */
 export function titleProblem(title: string): string | undefined {
