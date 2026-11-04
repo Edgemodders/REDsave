@@ -20,7 +20,7 @@ Last updated 2026-11-03.
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
-| [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | | To run (REDsave 0.0.9) |
+| [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Part A passed (steps 0 to 7); part B (Steam Cloud, a renumbered save) to run |
 | [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
 
 ## Waiting for a hand test
@@ -183,3 +183,5 @@ REDsave 0.0.9. Install `redsave-0.0.9.vsix` over 0.0.8. Part A runs on the test 
 12. Move the throwaway from Steam test back **In the game**. If its name is taken now (step 11), the question says it gets a new folder number. Start the game, and **load the throwaway** from Load Game: note whether it loads, and its title in the list. Quit.
 
 After the test, tell Claude which steps passed, and what you noted in steps 10 to 12.
+
+**Part A, 2026-11-03, REDsave 0.0.9:** steps 0 to 7 passed on the test copy. Part B waits.
