@@ -30,4 +30,7 @@ How to keep it (the Edgemodders convention):
 - The loadout in the game is marked in the side bar and on its tab, and the saves you make while it is in belong to it.
 - Before saves first leave the game's folder on a PC where Steam Cloud syncs it, REDsave explains once what that means.
 - Empty save folders the game leaves behind no longer make REDsave give an incoming save a new folder number.
+- Titles of your own: **Set title...** in a save's details gives it a title, shown in the game's Load Game and in REDsave. The box starts with its quest's name, so you only add your text ("Clampdown: Takemura alive"). Select several saves and **Add to titles...** adds the same text after each one's quest name. **Reset title** puts the game's title back.
+- A title is written into the save's own metadata, only while the game is closed. The save keeps the game's title in it too, so Reset title works wherever the save goes, and REDsave keeps a backup of each save's metadata before it first changes it.
+- Search finds saves by their titles and by their quests' own names; `titled:yes` (the **Your title** chip) finds the saves you titled.
 - **Run Game**, the play button at the top of REDsave's side bar: starts Cyberpunk 2077 through Steam (or its exe for other copies) with REDmod's `-modded`, as EDGEdeck does. With EDGEdeck installed it runs EDGEdeck's Run game, so pending mod changes deploy first.

@@ -72,6 +72,11 @@ export class SaveIndex {
     return { records, read, ms: Date.now() - t0 };
   }
 
+  /** Forgets saves so the next scan reads them again (a title write keeps the file's time). */
+  forget(dirs: string[]): void {
+    for (const d of dirs) this.entries.delete(d);
+  }
+
   private save(): void {
     try {
       fs.mkdirSync(path.dirname(this.cacheFile), { recursive: true });

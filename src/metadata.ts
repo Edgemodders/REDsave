@@ -16,7 +16,10 @@ export interface SaveRecord {
   time: number;
   /** The metadata's timestampString as the game wrote it. */
   timestamp?: string;
+  /** The game's quest title (a LocKey), or the player's own title written as plain text (S3). */
   trackedQuest?: string;
+  /** The save's own quest title (its LocKey) when REDsave gave it a title: kept in its metadata's userName. */
+  originalQuest?: string;
   /** The tracked quest's id from trackedQuestEntry (mq062_clampdown), the title when no name is read. */
   questId?: string;
   mainQuest?: string;
@@ -48,6 +51,13 @@ export interface SaveRecord {
   metadataFile?: string;
   /** Why the metadata could not be read, when it could not. */
   problem?: string;
+}
+
+/** The prefix REDsave writes before the save's own quest in its metadata's userName (titles.ts). */
+export const ORIGINAL_PREFIX = "REDsave:";
+/** The save's own quest (its LocKey) when REDsave has titled it, from the metadata's userName. */
+export function originalOf(userName: string | undefined): string | undefined {
+  return userName?.startsWith(ORIGINAL_PREFIX) ? userName.slice(ORIGINAL_PREFIX.length) : undefined;
 }
 
 const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
@@ -93,6 +103,7 @@ export function recordFrom(json: unknown, folder: SaveFolder, where: string, fil
     time: parseTimestamp(timestamp) ?? fileTime,
     timestamp,
     trackedQuest: str(m.trackedQuest),
+    originalQuest: originalOf(typeof m.userName === "string" ? m.userName : undefined),
     questId: questIdOf(str(m.trackedQuestEntry)),
     mainQuest: str(m.mainQuest),
     location: str(m.locationName),

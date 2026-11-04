@@ -13,7 +13,8 @@ import { SaveIndex } from "./index";
 import { Names } from "./names";
 import { findGame, launchTarget } from "./game";
 import { SavesPage } from "./page";
-import { playthroughLabel, playthroughsOf, titleOf } from "./search";
+import { isTitled, playthroughLabel, playthroughsOf, questNameOf, titleOf } from "./search";
+import { resetTitle, setTitle, titleProblem } from "./titles";
 import { defaultLibraryPath, Library, within } from "./library";
 import { gameRunning, Place, planMove, planSwap, recover, runMove, undoPlan } from "./move";
 import type { SaveRecord } from "./metadata";
@@ -172,6 +173,7 @@ export function activate(context: vscode.ExtensionContext): void {
     openFolder,
     move: (dirs: string[], target: string | undefined, query: string) => void moveSaves(dirs, target, query),
     swap: (id: string) => void swapIn(id),
+    title: (dirs: string[], mode: "set" | "add" | "reset") => void titleSaves(dirs, mode),
   };
 
   /**
@@ -231,7 +233,7 @@ export function activate(context: vscode.ExtensionContext): void {
     log.appendLine(`${all.length} saves (${r.records.length} in the game, ${all.length - r.records.length} in ${plural(library.loadouts.length, "loadout")}), ${read} read from their files, in ${ms} ms`);
     view.refresh();
     for (const p of allPages()) p.refresh(moved);
-    const keys = records.flatMap((x) => [x.trackedQuest, x.mainQuest, x.location]).filter((k): k is string => !!k);
+    const keys = records.flatMap((x) => [x.trackedQuest, x.originalQuest, x.mainQuest, x.location]).filter((k): k is string => !!k && /^LocKey#/i.test(k));
     void names.resolve(keys, gameDir()).then(() => {
       if (names.status.state !== "ready") log.appendLine(names.status.text);
       for (const p of allPages()) p.names(names.known, names.status);
@@ -458,6 +460,69 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     await moveSaves(dirs, target, "");
     if (!records.some((r) => dirs.includes(r.dir))) await context.globalState.update("redsave.titleSpike", []);
+  }
+
+  /**
+   * S3b, titles: Set title... (one save; the box starts with its quest's name and ": "), Add to
+   * titles... (several: the same text after each one's own quest name), Reset title (the game's
+   * title back). Written into the saves' metadata (titles.ts), only while the game is closed.
+   */
+  async function titleSaves(dirs: string[], mode: "set" | "add" | "reset"): Promise<void> {
+    if (busy) return void vscode.window.showWarningMessage("REDsave is moving saves. Try again when it has finished.");
+    const chosen = records.filter((r) => dirs.includes(r.dir) && r.metadataFile && !r.problem);
+    if (!chosen.length) return;
+    if (await gameRunning()) return void vscode.window.showWarningMessage("Cyberpunk 2077 is running. Close the game first: REDsave changes a save's title only while the game is closed.");
+    const nameOf = (k?: string) => (k ? names.known[k] ?? undefined : undefined);
+    const base = (r: SaveRecord) => questNameOf(r, nameOf) ?? titleOf(r, nameOf);
+    const work: { r: SaveRecord; title?: string }[] = [];
+    if (mode === "reset") {
+      const titled = chosen.filter((r) => r.originalQuest);
+      if (!titled.length) return void vscode.window.showInformationMessage("None of these saves has a title from REDsave.");
+      if (titled.length > 1) {
+        const ok = await vscode.window.showWarningMessage(`Reset the titles of ${plural(titled.length, "save")}?`, { modal: true, detail: "Each one shows the game's own quest title again, in the game and in REDsave." }, "Reset");
+        if (ok !== "Reset") return;
+      }
+      work.push(...titled.map((r) => ({ r })));
+    } else if (mode === "set") {
+      const r = chosen[0];
+      const start = isTitled(r) ? titleOf(r, nameOf) : `${base(r)}: `;
+      const title = await vscode.window.showInputBox({
+        title: `Title for ${r.name}`,
+        prompt: "Shown in the game's Load Game and in REDsave. One line, up to 120 characters.",
+        value: start,
+        valueSelection: [start.length, start.length],
+        validateInput: (v) => titleProblem(v),
+      });
+      if (title === undefined) return;
+      work.push({ r, title: title.trim() });
+    } else {
+      const text = await vscode.window.showInputBox({
+        title: `Add to the titles of ${plural(chosen.length, "save")}`,
+        prompt: `Text after each save's own quest name, such as "${base(chosen[0])}: <your text>". It replaces titles they have.`,
+        placeHolder: "Corpo run",
+        validateInput: (v) => (!v.trim() ? "Type the text to add" : chosen.map((r) => titleProblem(`${base(r)}: ${v.trim()}`)).find(Boolean)),
+      });
+      if (text === undefined) return;
+      work.push(...chosen.map((r) => ({ r, title: `${base(r)}: ${text.trim()}` })));
+    }
+    const backups = path.join(library.root, "backups", "titles");
+    const failed: string[] = [];
+    let done = 0;
+    for (const w of work) {
+      try {
+        if (w.title === undefined) resetTitle(w.r.dir, w.r.metadataFile!);
+        else setTitle(w.r.dir, w.r.metadataFile!, w.title, backups);
+        done++;
+        log.appendLine(`${w.title === undefined ? "Reset the title of" : "Titled"} ${w.r.dir}${w.title ? `: ${w.title}` : ""}`);
+      } catch (err) {
+        failed.push(`${w.r.name}: ${(err as Error).message}`);
+      }
+    }
+    index.forget(work.map((w) => w.r.dir));
+    scan();
+    const what = mode === "reset" ? `Reset the titles of ${plural(done, "save")}` : `Titled ${plural(done, "save")}`;
+    if (failed.length) void vscode.window.showErrorMessage(`${what}; ${plural(failed.length, "save")} not: ${failed.join("; ")}`);
+    else void vscode.window.showInformationMessage(`${what}. ${mode === "reset" ? "They show the game's title again." : "The game's Load Game shows the new title."}`);
   }
 
   async function newLoadout(suggested?: string): Promise<string | undefined> {

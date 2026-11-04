@@ -29,6 +29,8 @@ export interface PageActions {
   move: (dirs: string[], target: string | undefined, query: string) => void;
   /** The player pressed Swap in on a loadout's tab. */
   swap: (id: string) => void;
+  /** Set title... (one save), Add to titles... (several) or Reset title. */
+  title: (dirs: string[], mode: "set" | "add" | "reset") => void;
 }
 
 /** What a page sends back. */
@@ -38,7 +40,8 @@ type FromPage =
   | { type: "openFolder" }
   | { type: "copy"; text: string }
   | { type: "move"; dirs: string[]; target?: string; query: string }
-  | { type: "swap" };
+  | { type: "swap" }
+  | { type: "title"; dirs: string[]; mode: "set" | "add" | "reset" };
 
 export class SavesPage {
   private panel?: vscode.WebviewPanel;
@@ -156,6 +159,9 @@ export class SavesPage {
         break;
       case "swap":
         if (this.scope) this.actions.swap(this.scope);
+        break;
+      case "title":
+        this.actions.title(m.dirs, m.mode);
         break;
     }
   }

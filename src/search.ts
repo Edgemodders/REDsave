@@ -12,12 +12,13 @@
 //   level:>40 cred:20-30        ranges (level, cred, hours, body, int, ref, tech, cool)
 //   date:2026-11 date:>2026-10-01
 //   quest:q112 fact:q112_takemura_dead=0 -fact:sq031_grayson_killed
+//   titled:yes                  saves with a title of the player's own (S3)
 import type { SaveRecord } from "./metadata";
 
 /** Names for LocKeys: "LocKey#98600" to "Clampdown", or undefined when none is known. */
 export type NameOf = (key: string | undefined) => string | undefined;
 
-export const CHIP_KEYS = ["where", "lifepath", "gender", "voice", "difficulty", "kind", "playthrough", "version", "pl", "ponr", "modded"] as const;
+export const CHIP_KEYS = ["where", "titled", "lifepath", "gender", "voice", "difficulty", "kind", "playthrough", "version", "pl", "ponr", "modded"] as const;
 export type ChipKey = (typeof CHIP_KEYS)[number];
 const RANGE_KEYS = ["level", "cred", "hours", "body", "int", "ref", "tech", "cool"] as const;
 type RangeKey = (typeof RANGE_KEYS)[number];
@@ -41,6 +42,15 @@ const spaced = (s: string) => s.replace(/([a-z])([A-Z])/g, "$1 $2");
 export const lifePathLabel = (v?: string) => (v ? LIFEPATHS[v] ?? spaced(v) : "Unknown");
 export const kindLabel = (v: string) => KINDS[v] ?? v;
 export const difficultyLabel = (v?: string) => (v ? spaced(v) : "Unknown");
+
+/** Whether a save has a title of the player's own (S3): written by REDsave, or plain text in its quest title. */
+export const isTitled = (r: SaveRecord) => !!r.originalQuest || (!!r.trackedQuest && !/^LocKey#/i.test(r.trackedQuest));
+
+/** The save's own quest's name, under any title: the game's quest title. */
+export function questNameOf(r: SaveRecord, nameOf: NameOf): string | undefined {
+  const key = r.originalQuest ?? (isTitled(r) ? undefined : r.trackedQuest);
+  return nameOf(key) ?? (r.questId ? readableId(r.questId) : undefined);
+}
 
 /** A quest id made readable: "mq062_clampdown" to "mq062 clampdown". */
 export const readableId = (id: string) => id.replace(/_/g, " ");
@@ -83,6 +93,8 @@ export function chipValue(r: SaveRecord, key: ChipKey, playthroughs: Map<string,
   switch (key) {
     case "where":
       return placeValue(r.where, places);
+    case "titled":
+      return isTitled(r) ? "yes" : "no";
     case "lifepath":
       return r.lifePath && fold(lifePathLabel(r.lifePath)).replace(/\s+/g, "");
     case "gender":
@@ -109,6 +121,8 @@ export function chipValue(r: SaveRecord, key: ChipKey, playthroughs: Map<string,
 /** What a chip value is shown as. */
 export function chipLabel(key: ChipKey, value: string, playthroughs: Map<string, Playthrough>, places: Places = {}): string {
   switch (key) {
+    case "titled":
+      return value === "yes" ? "Titled" : "Game's title";
     case "where": {
       if (value === "game") return "In the game";
       const id = Object.keys(places).find((k) => placeValue(k, places) === value);
@@ -190,7 +204,7 @@ function factMatches(r: SaveRecord, spec: string): boolean {
 /** The words a save is found by. */
 export function haystack(r: SaveRecord, nameOf: NameOf): string {
   return fold(
-    [titleOf(r, nameOf), r.questId, nameOf(r.mainQuest), nameOf(r.location), lifePathLabel(r.lifePath), r.name, kindLabel(r.kind)]
+    [titleOf(r, nameOf), questNameOf(r, nameOf), r.questId, nameOf(r.mainQuest), nameOf(r.location), lifePathLabel(r.lifePath), r.name, kindLabel(r.kind)]
       .filter(Boolean)
       .join(" \u0001 "),
   );

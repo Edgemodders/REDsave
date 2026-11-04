@@ -42,7 +42,7 @@ export function makeSpikeCopies(saveDir: string, metadataName: string, questName
     const stamp = fs.statSync(file);
     fs.writeFileSync(file, setField(fs.readFileSync(file, "utf8"), v.field, v.value));
     // the file's times as the original's, so nothing but the field differs
-    fs.utimesSync(file, stamp.atime, stamp.mtime);
+    fs.utimesSync(file, stamp.atimeMs / 1000, stamp.mtimeMs / 1000);
     made.push({ variant: v.variant, dir: to, what: v.what });
   }
   return made;

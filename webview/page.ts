@@ -15,6 +15,8 @@ import {
   Playthrough,
   playthroughLabel,
   Places,
+  isTitled,
+  questNameOf,
   readableId,
   Result,
   search,
@@ -36,6 +38,7 @@ const vscode = acquireVsCodeApi();
 
 const CHIP_NAMES: Record<ChipKey, string> = {
   where: "Where",
+  titled: "Your title",
   lifepath: "Lifepath",
   gender: "V's body",
   voice: "V's voice",
@@ -108,7 +111,7 @@ app.innerHTML = `
   <div id="help" class="help"></div>
   <div id="chips" class="chips"></div>
   <div class="tally"><span id="count"></span><span id="sel"></span>
-    <button id="all" class="link">Select all</button><button id="none" class="link">Clear selection</button><button id="reveal" class="link">Show in folder</button><button id="move" class="act"></button>
+    <button id="all" class="link">Select all</button><button id="none" class="link">Clear selection</button><button id="reveal" class="link">Show in folder</button><button id="titleSel" class="link"></button><button id="untitleSel" class="link">Reset titles</button><button id="move" class="act"></button>
   </div>
 </header>
 <main><section id="list" tabindex="0"></section><aside id="details"></aside></main>
@@ -132,6 +135,7 @@ $("help").innerHTML = `
 <tr><td><code class="try">body:&gt;=15</code> <code class="try">int:20</code> <code class="try">ref:&gt;10</code> <code class="try">tech:5-10</code> <code class="try">cool:&lt;8</code></td><td>Attributes: Body, Intelligence, Reflexes, Technical Ability, Cool</td></tr>
 <tr><td><code class="try">date:2026-11</code> <code class="try">date:&gt;2026-10-01</code> <code class="try">date:&lt;2025</code></td><td>When it was saved</td></tr>
 <tr><td><code class="try">quest:q112</code> <code class="try">fact:q112_takemura_dead=0</code></td><td>A finished quest (by id), a quest fact and its value. Click either in a save's details to add it</td></tr>
+<tr><td><code class="try">titled:yes</code> <code class="try">titled:no</code></td><td>Saves with a title of your own, or the game's</td></tr>
 <tr><td><code class="try">-word</code> <code class="try">-kind:auto</code></td><td>A minus leaves out what matches</td></tr>
 </table>
 <p>Filters with the same key match any of their values (<code class="try">lifepath:corpo lifepath:nomad</code>); different keys must all match. Quotes keep spaces together.</p>`;
@@ -210,7 +214,8 @@ function detailsHtml(r: PageRecord | undefined, p: Map<string, Playthrough>): st
   const a = r.attributes;
   const pt = r.playthroughId ? p.get(r.playthroughId) : undefined;
   const rows: [string, string][] = [
-    ["Quest", nameOf(r.trackedQuest) ?? r.questId ?? "unknown"],
+    ...(isTitled(r) ? ([["Your title", titleOf(r, nameOf)]] as [string, string][]) : []),
+    ["Quest", questNameOf(r, nameOf) ?? "unknown"],
     ["Main quest", nameOf(r.mainQuest) ?? "unknown"],
     ["Place", nameOf(r.location) ?? "unknown"],
     ["Saved", `${when(r.time)}${r.timestamp ? "" : " (the file's time)"}`],
@@ -233,7 +238,7 @@ function detailsHtml(r: PageRecord | undefined, p: Map<string, Playthrough>): st
 <h3>${esc(titleOf(r, nameOf))}</h3>
 ${r.problem ? `<p class="warn">${esc(r.problem)}</p>` : ""}
 <table>${rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</table>
-<p class="actions"><button class="link" data-reveal="${esc(r.dir)}">Show in folder</button><button class="link" data-copy="${esc(r.dir)}">Copy the folder's path</button></p>
+<p class="actions"><button class="link" data-title="${esc(r.dir)}">Set title...</button>${r.originalQuest ? `<button class="link" data-untitle="${esc(r.dir)}">Reset title</button>` : ""}<button class="link" data-reveal="${esc(r.dir)}">Show in folder</button><button class="link" data-copy="${esc(r.dir)}">Copy the folder's path</button></p>
 <details><summary>Finished quests (${r.finishedQuests.length})</summary><div class="tags">${quests || "none"}</div></details>
 <details><summary>Quest facts (${r.facts.length})</summary><div class="tags">${facts || "none"}</div></details>`;
 }
@@ -267,6 +272,11 @@ function tally(): void {
   $("none").hidden = !selected.size;
   $("reveal").hidden = !selected.size;
   $("all").hidden = !n;
+  // One save: Set title...; several: Add to titles... (the same text after each one's quest name).
+  const sel = records.filter((r) => selected.has(r.dir));
+  $("titleSel").hidden = !selected.size;
+  $("titleSel").textContent = selected.size === 1 ? "Set title..." : "Add to titles...";
+  $("untitleSel").hidden = !sel.some((r) => r.originalQuest);
   const mv = $("move");
   mv.hidden = !selected.size;
   mv.textContent = !scope ? "Move to loadout..." : picking ? `Add ${selected.size} to ${loadout?.name ?? "this loadout"}` : "Move to...";
@@ -382,6 +392,8 @@ $("none").addEventListener("click", () => {
   drawSelection();
 });
 $("reveal").addEventListener("click", () => vscode.postMessage({ type: "reveal", dirs: [...selected] }));
+$("titleSel").addEventListener("click", () => vscode.postMessage({ type: "title", dirs: [...selected], mode: selected.size === 1 ? "set" : "add" }));
+$("untitleSel").addEventListener("click", () => vscode.postMessage({ type: "title", dirs: [...selected], mode: "reset" }));
 // The extension asks where to (unless adding to this loadout), confirms with the counts, and moves.
 $("move").addEventListener("click", () => vscode.postMessage({ type: "move", dirs: [...selected], target: scope && picking ? scope : undefined, query }));
 
@@ -404,6 +416,8 @@ $("details").addEventListener("click", (e) => {
   if (t.dataset.add) setQuery(query.includes(t.dataset.add) ? query : `${query.trim()} ${t.dataset.add}`.trim());
   if (t.dataset.reveal) vscode.postMessage({ type: "reveal", dirs: [t.dataset.reveal] });
   if (t.dataset.copy) vscode.postMessage({ type: "copy", text: t.dataset.copy });
+  if (t.dataset.title) vscode.postMessage({ type: "title", dirs: [t.dataset.title], mode: "set" });
+  if (t.dataset.untitle) vscode.postMessage({ type: "title", dirs: [t.dataset.untitle], mode: "reset" });
 });
 
 document.addEventListener("keydown", (e) => {
