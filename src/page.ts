@@ -1,8 +1,10 @@
-// The Saves page: one webview panel that shows every indexed save, with the search box, chips,
-// sort, groups, selection and details. The search runs in the page (webview/page.ts, over
-// src/search.ts); this side sends it the records, the names and the pictures' addresses.
+// The Saves page and each loadout's tab: webview panels that show indexed saves, with the search
+// box, chips, sort, groups, selection and details. The search runs in the page (webview/page.ts,
+// over src/search.ts); this side sends it the records, the names, the places and the pictures'
+// addresses, and takes back what the player asked for (show in folder, copy, move).
 import * as vscode from "vscode";
 import * as crypto from "node:crypto";
+import * as path from "node:path";
 import type { SaveRecord } from "./metadata";
 import type { NamesStatus } from "./names";
 
@@ -11,22 +13,45 @@ export interface PageData {
   names: Record<string, string | null>;
   status: NamesStatus;
   savesDir: string;
+  libraryDir: string;
   scan: { count: number; read: number; ms: number };
+  /** Loadout id to name. */
+  places: Record<string, string>;
+  /** A loadout by its id: for its tab's header. */
+  loadout: (id: string) => { name: string; notes: string; count: number; bytes: number } | undefined;
 }
 
-/** What the page sends back. */
-type FromPage = { type: "ready" } | { type: "reveal"; dirs: string[] } | { type: "openFolder" } | { type: "copy"; text: string };
+export interface PageActions {
+  openFolder: () => void;
+  /** The player pressed Move to loadout..., Move to... or Add to <loadout>. */
+  move: (dirs: string[], target: string | undefined, query: string) => void;
+}
+
+/** What a page sends back. */
+type FromPage =
+  | { type: "ready" }
+  | { type: "reveal"; dirs: string[] }
+  | { type: "openFolder" }
+  | { type: "copy"; text: string }
+  | { type: "move"; dirs: string[]; target?: string; query: string };
 
 export class SavesPage {
   private panel?: vscode.WebviewPanel;
   private ready = false;
   private queued: unknown[] = [];
 
+  /** scope: undefined for the Saves page, a loadout's id for its tab. */
   constructor(
     private readonly extensionUri: vscode.Uri,
+    private readonly scope: string | undefined,
     private readonly data: () => PageData,
-    private readonly openFolder: () => void,
+    private readonly actions: PageActions,
+    private readonly closed: () => void = () => {},
   ) {}
+
+  private title(): string {
+    return this.scope ? this.data().places[this.scope] ?? "Loadout" : "Saves";
+  }
 
   /** Opens the page, or brings it forward; with a query, puts it in the search box. */
   show(query?: string): void {
@@ -34,11 +59,12 @@ export class SavesPage {
       this.panel.reveal();
     } else {
       this.ready = false;
-      const savesDir = vscode.Uri.file(this.data().savesDir);
-      this.panel = vscode.window.createWebviewPanel("redsave.page", "Saves", vscode.ViewColumn.Active, {
+      const d = this.data();
+      this.panel = vscode.window.createWebviewPanel(this.scope ? "redsave.loadout" : "redsave.page", this.title(), vscode.ViewColumn.Active, {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist"), vscode.Uri.joinPath(this.extensionUri, "media"), savesDir],
+        // pictures are shown from where the saves are: the game's folder and the library
+        localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, "dist"), vscode.Uri.joinPath(this.extensionUri, "media"), vscode.Uri.file(d.savesDir), vscode.Uri.file(d.libraryDir)],
       });
       this.panel.iconPath = vscode.Uri.joinPath(this.extensionUri, "docs", "assets", "brand", "icon.png");
       this.panel.webview.html = this.html(this.panel.webview);
@@ -47,14 +73,25 @@ export class SavesPage {
         this.panel = undefined;
         this.ready = false;
         this.queued = [];
+        this.closed();
       });
     }
     if (query !== undefined) this.post({ type: "query", text: query });
   }
 
-  /** Sends the page everything again (after a scan). */
-  refresh(): void {
-    if (this.panel) this.post(this.payload());
+  get isOpen(): boolean {
+    return !!this.panel;
+  }
+
+  close(): void {
+    this.panel?.dispose();
+  }
+
+  /** Sends the page everything again (after a scan); moved: after a move this page started. */
+  refresh(moved = false): void {
+    if (!this.panel) return;
+    this.panel.title = this.title();
+    this.post({ ...this.payload(), moved });
   }
 
   /** Sends only the names (after REDbridge answered). */
@@ -65,9 +102,18 @@ export class SavesPage {
   private payload() {
     const d = this.data();
     const webview = this.panel!.webview;
-    // The pictures are shown from the save folder itself, by webview address.
     const records = d.records.map((r) => ({ ...r, shot: r.screenshot ? webview.asWebviewUri(vscode.Uri.file(r.screenshot)).toString() : undefined }));
-    return { type: "data", records, names: d.names, status: d.status, savesDir: d.savesDir, scan: d.scan };
+    return {
+      type: "data",
+      records,
+      names: d.names,
+      status: d.status,
+      savesDir: d.savesDir,
+      scan: d.scan,
+      scope: this.scope,
+      places: d.places,
+      loadout: this.scope ? d.loadout(this.scope) : undefined,
+    };
   }
 
   private post(message: unknown): void {
@@ -87,16 +133,20 @@ export class SavesPage {
         this.queued = [];
         break;
       case "reveal":
-        // One save: its folder selected in Explorer. Several: the save folder they are in.
+        // One save: its folder selected in Explorer. Several: the folder of the first.
         if (m.dirs.length === 1) void vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(m.dirs[0]));
-        else this.openFolder();
+        else if (m.dirs.length) void vscode.env.openExternal(vscode.Uri.file(path.dirname(m.dirs[0])));
+        else this.actions.openFolder();
         break;
       case "openFolder":
-        this.openFolder();
+        this.actions.openFolder();
         break;
       case "copy":
         void vscode.env.clipboard.writeText(m.text);
         void vscode.window.setStatusBarMessage("REDsave: copied", 2000);
+        break;
+      case "move":
+        this.actions.move(m.dirs, m.target, m.query);
         break;
     }
   }

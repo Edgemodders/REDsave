@@ -48,6 +48,14 @@ select { background: var(--vscode-dropdown-background); color: var(--vscode-drop
 .chip.none { opacity: .45; }
 .tally { margin-top: 8px; color: var(--dim); display: flex; gap: 6px; align-items: center; }
 .tally #sel { color: var(--yellow); }
+.act { background: var(--vscode-button-background, #0e639c); color: var(--vscode-button-foreground, #ffffff); border: 0; padding: 3px 10px; cursor: pointer; margin-left: 6px; }
+.act:hover { background: var(--vscode-button-hoverBackground, #1177bb); }
+.loadout { margin-bottom: 8px; }
+.lbar { display: flex; gap: 12px; align-items: baseline; }
+.lbar h1 { margin: 0; font-size: 18px; font-weight: 600; color: var(--yellow); }
+.loadout .notes { margin: 4px 0 0; color: var(--dim); white-space: pre-wrap; }
+.loadout p { margin: 4px 0 0; }
+.when .place { color: var(--cyan); }
 
 main { display: grid; grid-template-columns: 1fr 360px; min-height: 0; }
 #list { overflow-y: auto; outline: 0; }

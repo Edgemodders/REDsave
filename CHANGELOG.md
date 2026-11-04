@@ -20,4 +20,9 @@ How to keep it (the Edgemodders convention):
 - A save's details: every field its metadata has, with its finished quests and quest facts, each one click away from a filter.
 - Quest and place names from your own copy of the game, through REDbridge (from EDGEdeck, REDcode or REDnode). Without it, saves show their quest's id.
 - The side bar: Open the Saves page, the saves by kind and the playthroughs, each opening the page with its filter.
-- New saves show while the game runs. REDsave only reads your saves.
+- New saves show while the game runs.
+- Loadouts: sets of saves kept outside the game's save folder, in `Saved Games\REDsave` (the setting **REDsave: Library Path** for another place). Make one with the **+** on **Loadouts** in the side bar.
+- Each loadout opens in its own tab, with its saves, name, notes and size. **Add saves...** there lists every save elsewhere, with the full search and filters: select, then **Add to** the loadout.
+- Move a selection to a loadout or back into the game from the Saves page (**Move to loadout...**) or a loadout's tab (**Move to...**). REDsave asks once, with how many saves come from where, before anything moves.
+- Moves are safe: never while the game runs (moves between loadouts excepted), nothing deleted, every move written down first and finished at the next start if VS Code closes partway, and **Undo the Last Move** puts the saves back. A save whose folder name is taken where it goes gets the next free number.
+- A **Where** chip on the Saves page: the game's folder and each loadout, with counts.

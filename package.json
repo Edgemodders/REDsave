@@ -2,7 +2,7 @@
   "name": "redsave",
   "displayName": "REDsave",
   "description": "Save game manager for Cyberpunk 2077: search and filter your saves, keep sets of them outside the game and swap them in, and give saves your own titles.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "edgemodders",
   "preview": true,
   "pricing": "Free",
@@ -80,6 +80,43 @@
         "title": "Open the Game's Save Folder",
         "category": "REDsave",
         "icon": "$(folder-opened)"
+      },
+      {
+        "command": "redsave.newLoadout",
+        "title": "New Loadout...",
+        "category": "REDsave",
+        "icon": "$(add)"
+      },
+      {
+        "command": "redsave.openLoadout",
+        "title": "Open Loadout",
+        "category": "REDsave"
+      },
+      {
+        "command": "redsave.renameLoadout",
+        "title": "Rename...",
+        "category": "REDsave"
+      },
+      {
+        "command": "redsave.loadoutNotes",
+        "title": "Notes...",
+        "category": "REDsave"
+      },
+      {
+        "command": "redsave.openLoadoutFolder",
+        "title": "Open Its Folder",
+        "category": "REDsave"
+      },
+      {
+        "command": "redsave.removeLoadout",
+        "title": "Remove...",
+        "category": "REDsave"
+      },
+      {
+        "command": "redsave.undoMove",
+        "title": "Undo the Last Move",
+        "category": "REDsave",
+        "icon": "$(discard)"
       }
     ],
     "menus": {
@@ -98,6 +135,80 @@
           "command": "redsave.openSavesFolder",
           "when": "view == redsave.saves",
           "group": "navigation@2"
+        },
+        {
+          "command": "redsave.newLoadout",
+          "when": "view == redsave.saves",
+          "group": "loadouts@1"
+        },
+        {
+          "command": "redsave.undoMove",
+          "when": "view == redsave.saves",
+          "group": "loadouts@2"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "redsave.openLoadout",
+          "when": "false"
+        },
+        {
+          "command": "redsave.renameLoadout",
+          "when": "false"
+        },
+        {
+          "command": "redsave.loadoutNotes",
+          "when": "false"
+        },
+        {
+          "command": "redsave.openLoadoutFolder",
+          "when": "false"
+        },
+        {
+          "command": "redsave.removeLoadout",
+          "when": "false"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "redsave.newLoadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave.loadouts/",
+          "group": "inline"
+        },
+        {
+          "command": "redsave.newLoadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave.loadouts/",
+          "group": "loadouts@1"
+        },
+        {
+          "command": "redsave.undoMove",
+          "when": "view == redsave.saves && viewItem == redsave.loadouts.undo",
+          "group": "loadouts@2"
+        },
+        {
+          "command": "redsave.openLoadout",
+          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "loadout@1"
+        },
+        {
+          "command": "redsave.renameLoadout",
+          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "loadout@2"
+        },
+        {
+          "command": "redsave.loadoutNotes",
+          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "loadout@3"
+        },
+        {
+          "command": "redsave.openLoadoutFolder",
+          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "loadout@4"
+        },
+        {
+          "command": "redsave.removeLoadout",
+          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "loadout@9"
         }
       ]
     },
@@ -112,7 +223,7 @@
         "redsave.libraryPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Where REDsave keeps save loadouts, outside the game's save folder. Empty: `Saved Games\\REDsave` in your user folder, on the same drive as the game's saves so a swap moves folders at once (unverified until loadouts are built)."
+          "markdownDescription": "Where REDsave keeps loadouts, outside the game's save folder. Empty: `Saved GamesREDsave` in your user folder, on the same drive as the game's saves, so a move is a rename that happens at once. On another drive, moves copy the saves, check the copies, then remove the originals."
         },
         "redsave.gamePath": {
           "type": "string",

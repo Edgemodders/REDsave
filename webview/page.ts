@@ -1,6 +1,8 @@
 // The Saves page's script, in the webview. It keeps the records the extension sends, runs the
 // search (src/search.ts) on each change of the box, chips or sort, and draws the list, the chips,
-// the selection and the details. It reads and writes nothing but its own view state.
+// the selection and the details. The same script draws a loadout's tab (scope set): that loadout's
+// saves, or with Add saves... every save elsewhere to pick from. It never moves a save itself: Move
+// buttons send the selection to the extension, which asks and moves.
 import type { SaveRecord } from "../src/metadata";
 import {
   CHIP_KEYS,
@@ -12,6 +14,7 @@ import {
   NameOf,
   Playthrough,
   playthroughLabel,
+  Places,
   readableId,
   Result,
   search,
@@ -32,6 +35,7 @@ declare function acquireVsCodeApi(): { postMessage(m: unknown): void; getState()
 const vscode = acquireVsCodeApi();
 
 const CHIP_NAMES: Record<ChipKey, string> = {
+  where: "Where",
   lifepath: "Lifepath",
   gender: "V's body",
   voice: "V's voice",
@@ -49,6 +53,12 @@ let records: PageRecord[] = [];
 let names: Record<string, string | null> = {};
 let status: Status = { state: "working", text: "" };
 let savesDir = "";
+/** Set on a loadout's tab: its id. */
+let scope: string | undefined;
+let places: Places = {};
+let loadout: { name: string; notes: string; count: number; bytes: number } | undefined;
+/** On a loadout's tab: picking saves to add (every save elsewhere shows), rather than its own. */
+let picking = false;
 let scanInfo = { count: 0, read: 0, ms: 0 };
 let query = saved.q ?? "";
 let sort: SortKey = saved.sort ?? "newest";
@@ -67,6 +77,8 @@ const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "
 const when = (t: number) => new Date(t).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 const hours = (s?: number) => (s === undefined ? "unknown" : `${Math.floor(s / 3600)} h ${String(Math.floor((s % 3600) / 60)).padStart(2, "0")} min`);
 const num = (n?: number) => (n === undefined ? "?" : String(Math.round(n)));
+const placeName = (where: string) => (where === "game" ? "the game" : places[where] ?? where);
+const gb = (b: number) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : `${Math.round(b / 1e6)} MB`);
 const vOf = (r: SaveRecord) => (r.body ? `${r.body.toLowerCase()} V${r.voice && r.voice !== r.body ? `, ${r.voice.toLowerCase()} voice` : ""}` : "V");
 
 function keep(): void {
@@ -78,6 +90,7 @@ function keep(): void {
 const app = document.getElementById("app")!;
 app.innerHTML = `
 <header>
+  <div id="loadout" class="loadout" hidden></div>
   <div class="bar">
     <div class="search"><span class="slash">/</span><input id="q" type="text" spellcheck="false" autocomplete="off" placeholder="Search saves: words, or filters such as lifepath:corpo level:&gt;40"><button id="clear" class="icon" title="Clear the search">&#x2715;</button></div>
     <select id="sort" title="Sort">
@@ -93,7 +106,7 @@ app.innerHTML = `
   <div id="help" class="help"></div>
   <div id="chips" class="chips"></div>
   <div class="tally"><span id="count"></span><span id="sel"></span>
-    <button id="all" class="link">Select all</button><button id="none" class="link">Clear selection</button><button id="reveal" class="link">Show in folder</button>
+    <button id="all" class="link">Select all</button><button id="none" class="link">Clear selection</button><button id="reveal" class="link">Show in folder</button><button id="move" class="act"></button>
   </div>
 </header>
 <main><section id="list" tabindex="0"></section><aside id="details"></aside></main>
@@ -156,15 +169,18 @@ function rowHtml(r: PageRecord): string {
   if (r.phantomLiberty) meta.push(`<span class="pl">PL</span>`);
   if (r.pointOfNoReturn) meta.push(`<span class="ponr">PONR</span>`);
   const cls = ["save", selected.has(r.dir) ? "on" : "", focused === r.dir ? "focus" : "", r.problem ? "bad" : ""].filter(Boolean).join(" ");
+  // Where the save is, when the list shows more than one place.
+  const at = manyPlaces ? `<span class="place">${esc(r.where === "game" ? "In the game" : placeName(r.where))}</span><br>` : "";
   return `<div class="${cls}" data-dir="${esc(r.dir)}">
   <div class="shot">${r.shot ? `<img loading="lazy" src="${esc(r.shot)}" alt="">` : ""}</div>
   <div class="text"><b>${esc(titleOf(r, nameOf))}</b><small>${esc(sub)}</small><small class="meta">${meta.join(" · ")}</small></div>
-  <div class="when">${esc(kindLabel(r.kind))}<br>${esc(when(r.time))}<br><span class="dim">${esc(hours(r.playTime))}</span></div>
+  <div class="when">${at}${esc(kindLabel(r.kind))}<br>${esc(when(r.time))}<br><span class="dim">${esc(hours(r.playTime))}</span></div>
 </div>`;
 }
 
 function listHtml(r: Result): string {
-  if (!records.length) return `<p class="empty">No saves in ${esc(savesDir)}.</p>`;
+  if (scope && !picking && !base().length) return `<p class="empty">No saves in this loadout yet. <button class="link" id="addSaves2">Add saves...</button></p>`;
+  if (!base().length) return `<p class="empty">No saves in ${esc(savesDir)}.</p>`;
   if (!r.records.length) return `<p class="empty">No save matches. <button class="link" id="clear2">Clear the search</button></p>`;
   if (!group) {
     shown = r.records as PageRecord[];
@@ -197,6 +213,7 @@ function detailsHtml(r: PageRecord | undefined, p: Map<string, Playthrough>): st
     ["Place", nameOf(r.location) ?? "unknown"],
     ["Saved", `${when(r.time)}${r.timestamp ? "" : " (the file's time)"}`],
     ["Kind", `${kindLabel(r.kind)}, ${r.name}`],
+    ["Where", r.where === "game" ? "In the game's save folder" : `In the loadout ${placeName(r.where)}`],
     ["Lifepath", lifePathLabel(r.lifePath)],
     ["V", `${r.body ?? "unknown"} body, ${r.voice ?? "unknown"} voice`],
     ["Level", `${num(r.level)}, Street Cred ${num(r.streetCred)}`],
@@ -219,20 +236,44 @@ ${r.problem ? `<p class="warn">${esc(r.problem)}</p>` : ""}
 <details><summary>Quest facts (${r.facts.length})</summary><div class="tags">${facts || "none"}</div></details>`;
 }
 
+/** The saves this tab works on: all of them; a loadout's own; or, when adding, every save elsewhere. */
+function base(): PageRecord[] {
+  if (!scope) return records;
+  return records.filter((r) => (picking ? r.where !== scope : r.where === scope));
+}
+let manyPlaces = false;
+
+function loadoutHtml(): string {
+  if (!scope || !loadout) return "";
+  const notes = loadout.notes ? `<p class="notes">${esc(loadout.notes)}</p>` : "";
+  if (picking) {
+    return `<div class="lbar"><h1>Add saves to ${esc(loadout.name)}</h1><button id="doneAdding" class="link">Back to ${esc(loadout.name)}</button></div>
+<p class="dim">Every save in the game and in the other loadouts. Search or filter, select, then <b>Add to ${esc(loadout.name)}</b>: they move into this loadout.</p>`;
+  }
+  return `<div class="lbar"><h1>${esc(loadout.name)}</h1><span class="dim">${loadout.count} saves · ${gb(loadout.bytes)}</span><button id="addSaves" class="act">Add saves...</button></div>${notes}`;
+}
+
 function tally(): void {
-  const total = records.length;
+  const total = base().length;
   const n = result?.records.length ?? 0;
   $("count").textContent = n === total ? `${total} saves` : `${n} of ${total} saves`;
   $("sel").textContent = selected.size ? ` · ${selected.size} selected` : "";
   $("none").hidden = !selected.size;
   $("reveal").hidden = !selected.size;
   $("all").hidden = !n;
+  const mv = $("move");
+  mv.hidden = !selected.size;
+  mv.textContent = !scope ? "Move to loadout..." : picking ? `Add ${selected.size} to ${loadout?.name ?? "this loadout"}` : "Move to...";
 }
 
 function draw(): void {
-  result = search(records, query, nameOf, sort);
-  // A selection keeps only saves that still exist; it is kept across searches.
-  const live = new Set(records.map((r) => r.dir));
+  const list = base();
+  result = search(list, query, nameOf, sort, places);
+  manyPlaces = new Set(list.map((r) => r.where)).size > 1;
+  $("loadout").hidden = !scope;
+  $("loadout").innerHTML = loadoutHtml();
+  // A selection keeps only saves that are still on this tab; it is kept across searches.
+  const live = new Set(list.map((r) => r.dir));
   for (const d of [...selected]) if (!live.has(d)) selected.delete(d);
   $("chips").innerHTML = chipsHtml(result);
   $("list").innerHTML = listHtml(result);
@@ -304,6 +345,7 @@ $("chips").addEventListener("click", (e) => {
 $("list").addEventListener("click", (e) => {
   const t = e.target as HTMLElement;
   if (t.id === "clear2") return setQuery("");
+  if (t.id === "addSaves2") return setPicking(true);
   const row = t.closest<HTMLElement>(".save");
   if (!row) return;
   const dir = row.dataset.dir!;
@@ -334,6 +376,20 @@ $("none").addEventListener("click", () => {
   drawSelection();
 });
 $("reveal").addEventListener("click", () => vscode.postMessage({ type: "reveal", dirs: [...selected] }));
+// The extension asks where to (unless adding to this loadout), confirms with the counts, and moves.
+$("move").addEventListener("click", () => vscode.postMessage({ type: "move", dirs: [...selected], target: scope && picking ? scope : undefined, query }));
+
+function setPicking(on: boolean): void {
+  picking = on;
+  selected.clear();
+  focused = undefined;
+  setQuery("");
+}
+$("loadout").addEventListener("click", (e) => {
+  const id = (e.target as HTMLElement).id;
+  if (id === "addSaves") setPicking(true);
+  if (id === "doneAdding") setPicking(false);
+});
 
 $("details").addEventListener("click", (e) => {
   const t = (e.target as HTMLElement).closest<HTMLElement>("button");
@@ -365,6 +421,11 @@ window.addEventListener("message", (e) => {
     status = m.status;
     savesDir = m.savesDir;
     scanInfo = m.scan;
+    scope = m.scope;
+    places = m.places ?? {};
+    loadout = m.loadout;
+    // after a move, the moved saves are no longer on this tab: the selection drops them in draw()
+    if (m.moved && picking) picking = false;
     draw();
   } else if (m.type === "names") {
     names = m.names;

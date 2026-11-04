@@ -96,3 +96,15 @@ test("toggleChip adds and removes a filter, keeping the rest", () => {
   assert.equal(toggleChip("", "lifepath", "street kid"), `lifepath:"street kid"`);
   assert.equal(toggleChip(`lifepath:"street kid"`, "lifepath", "street kid"), "");
 });
+
+test("the where chip finds the game's folder or a loadout by its name", () => {
+  const inLoadout = { ...nomad, where: "dogtown-run-abc123", dir: "C:\\lib\\x" };
+  const places = { "dogtown-run-abc123": "Dogtown run" };
+  const recs = [corpoA, inLoadout];
+  const names = (q: string) => search(recs, q, nameOf, "newest", places).records.map((r) => r.dir);
+  assert.deepEqual(names("where:game"), [corpoA.dir]);
+  assert.deepEqual(names(`where:"Dogtown run"`), [inLoadout.dir]);
+  assert.deepEqual(names("where:dogtownrun"), [inLoadout.dir]);
+  const facet = search(recs, "", nameOf, "newest", places).facets.where.map((f) => [f.label, f.count]);
+  assert.deepEqual(facet, [["In the game", 1], ["Dogtown run", 1]]);
+});

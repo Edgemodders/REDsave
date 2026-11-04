@@ -6,8 +6,9 @@
 // with different keys must all match; a leading "-" excludes.
 //
 //   corpo takemura              words, across the title, quest, main quest, place, lifepath, folder
-//   lifepath:corpo gender:male  chips (lifepath, gender, voice, difficulty, kind, playthrough,
-//                               version, pl, ponr, modded)
+//   lifepath:corpo gender:male  chips (where, lifepath, gender, voice, difficulty, kind,
+//                               playthrough, version, pl, ponr, modded)
+//   where:game where:"Dogtown run"  the game's save folder, or a loadout by its name
 //   level:>40 cred:20-30        ranges (level, cred, hours, body, int, ref, tech, cool)
 //   date:2026-11 date:>2026-10-01
 //   quest:q112 fact:q112_takemura_dead=0 -fact:sq031_grayson_killed
@@ -16,7 +17,7 @@ import type { SaveRecord } from "./metadata";
 /** Names for LocKeys: "LocKey#98600" to "Clampdown", or undefined when none is known. */
 export type NameOf = (key: string | undefined) => string | undefined;
 
-export const CHIP_KEYS = ["lifepath", "gender", "voice", "difficulty", "kind", "playthrough", "version", "pl", "ponr", "modded"] as const;
+export const CHIP_KEYS = ["where", "lifepath", "gender", "voice", "difficulty", "kind", "playthrough", "version", "pl", "ponr", "modded"] as const;
 export type ChipKey = (typeof CHIP_KEYS)[number];
 const RANGE_KEYS = ["level", "cred", "hours", "body", "int", "ref", "tech", "cool"] as const;
 type RangeKey = (typeof RANGE_KEYS)[number];
@@ -67,10 +68,17 @@ export function parseQuery(text: string): Term[] {
   return terms;
 }
 
+/** The names of the places saves are in: loadout id to name ("game" is the game's save folder). */
+export type Places = Record<string, string>;
+
+const placeValue = (where: string, places: Places) => (where === "game" ? "game" : fold(places[where] ?? where).replace(/\s+/g, ""));
+
 /** A chip's value for a record, as written in the box: lifepath:corpo, kind:manual, pl:yes. */
-export function chipValue(r: SaveRecord, key: ChipKey, playthroughs: Map<string, Playthrough>): string | undefined {
+export function chipValue(r: SaveRecord, key: ChipKey, playthroughs: Map<string, Playthrough>, places: Places = {}): string | undefined {
   const yesNo = (b?: boolean) => (b === undefined ? undefined : b ? "yes" : "no");
   switch (key) {
+    case "where":
+      return placeValue(r.where, places);
     case "lifepath":
       return r.lifePath && fold(lifePathLabel(r.lifePath)).replace(/\s+/g, "");
     case "gender":
@@ -95,8 +103,13 @@ export function chipValue(r: SaveRecord, key: ChipKey, playthroughs: Map<string,
 }
 
 /** What a chip value is shown as. */
-export function chipLabel(key: ChipKey, value: string, playthroughs: Map<string, Playthrough>): string {
+export function chipLabel(key: ChipKey, value: string, playthroughs: Map<string, Playthrough>, places: Places = {}): string {
   switch (key) {
+    case "where": {
+      if (value === "game") return "In the game";
+      const id = Object.keys(places).find((k) => placeValue(k, places) === value);
+      return id ? places[id] : value;
+    }
     case "lifepath":
       return { corpo: "Corpo", streetkid: "Street Kid", nomad: "Nomad" }[value] ?? value;
     case "gender":
@@ -181,7 +194,7 @@ export function haystack(r: SaveRecord, nameOf: NameOf): string {
 
 function termMatches(r: SaveRecord, t: Term, ctx: Context): boolean {
   if (!t.key) return ctx.hay(r).includes(fold(t.value));
-  if ((CHIP_KEYS as readonly string[]).includes(t.key)) return chipValue(r, t.key as ChipKey, ctx.playthroughs) === fold(t.value).replace(/\s+/g, "");
+  if ((CHIP_KEYS as readonly string[]).includes(t.key)) return chipValue(r, t.key as ChipKey, ctx.playthroughs, ctx.places) === fold(t.value).replace(/\s+/g, "");
   if ((RANGE_KEYS as readonly string[]).includes(t.key)) return inRange(rangeValue(r, t.key as RangeKey), t.value);
   if (t.key === "date") return onDate(r.time, t.value);
   if (t.key === "quest") return r.finishedQuests.some((q) => fold(q).startsWith(fold(t.value)));
@@ -190,6 +203,7 @@ function termMatches(r: SaveRecord, t: Term, ctx: Context): boolean {
 }
 
 interface Context {
+  places: Places;
   hay: (r: SaveRecord) => string;
   playthroughs: Map<string, Playthrough>;
 }
@@ -262,11 +276,12 @@ export interface Result {
 }
 
 /** Runs the box's text over the records: the matching ones, sorted, and the chips with their counts. */
-export function search(records: SaveRecord[], text: string, nameOf: NameOf, sort: SortKey = "newest"): Result {
+export function search(records: SaveRecord[], text: string, nameOf: NameOf, sort: SortKey = "newest", places: Places = {}): Result {
   const terms = parseQuery(text);
   const playthroughs = playthroughsOf(records);
   const hays = new Map<SaveRecord, string>();
   const ctx: Context = {
+    places,
     playthroughs,
     hay: (r) => {
       let h = hays.get(r);
@@ -280,13 +295,13 @@ export function search(records: SaveRecord[], text: string, nameOf: NameOf, sort
     const active = new Set(terms.filter((t) => t.key === key && !t.not).map((t) => fold(t.value).replace(/\s+/g, "")));
     const counts = new Map<string, number>();
     for (const r of records) {
-      const v = chipValue(r, key, playthroughs);
+      const v = chipValue(r, key, playthroughs, places);
       if (v === undefined || v === "") continue;
       if (!counts.has(v)) counts.set(v, 0);
       if (matchesAll(r, terms, ctx, key)) counts.set(v, counts.get(v)! + 1);
     }
     facets[key] = [...counts]
-      .map(([value, count]) => ({ value, label: chipLabel(key, value, playthroughs), count, active: active.has(value) }))
+      .map(([value, count]) => ({ value, label: chipLabel(key, value, playthroughs, places), count, active: active.has(value) }))
       .sort((a, b) => (key === "playthrough" ? Number(a.value) - Number(b.value) : key === "version" ? parseFloat(b.value) - parseFloat(a.value) : b.count - a.count));
   }
   return { records: sortRecords(found, sort, nameOf), facets, playthroughs };
