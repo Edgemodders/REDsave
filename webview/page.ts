@@ -108,18 +108,24 @@ sortBox.value = sort;
 groupBox.checked = group;
 
 $("help").innerHTML = `
-<p>Type words to find saves by their title, quest, place, lifepath or folder name. All words must match. Click a chip to add a filter, or type one:</p>
+<p>Type words to find saves by their title, quest, place, lifepath or folder name. All words must match. Click a chip to add a filter, or type one. Click an example below to search with it:</p>
 <table>
-<tr><td><code>lifepath:corpo</code> <code>gender:male</code> <code>voice:female</code></td><td>Lifepath (corpo, nomad, streetkid), V's body, V's voice</td></tr>
-<tr><td><code>kind:manual</code> <code>playthrough:2</code> <code>version:2.5</code></td><td>Kind (manual, auto, quick, ponr, endgame), playthrough, game version</td></tr>
-<tr><td><code>pl:yes</code> <code>ponr:no</code> <code>modded:yes</code> <code>difficulty:veryhard</code></td><td>Phantom Liberty, point of no return, modded, difficulty</td></tr>
-<tr><td><code>level:&gt;40</code> <code>cred:20-30</code> <code>hours:&lt;100</code></td><td>Level, Street Cred, play time in hours</td></tr>
-<tr><td><code>body:&gt;=15</code> <code>int:20</code> <code>ref:</code> <code>tech:</code> <code>cool:</code></td><td>Attributes: Body, Intelligence, Reflexes, Technical Ability, Cool</td></tr>
-<tr><td><code>date:2026-11</code> <code>date:&gt;2026-10-01</code> <code>date:&lt;2025</code></td><td>When it was saved</td></tr>
-<tr><td><code>quest:q112</code> <code>fact:q112_takemura_dead=0</code></td><td>A finished quest (by id), a quest fact and its value. Click either in a save's details to add it</td></tr>
-<tr><td><code>-word</code> <code>-kind:auto</code></td><td>A minus leaves out what matches</td></tr>
+<tr><td><code class="try">lifepath:corpo</code> <code class="try">gender:male</code> <code class="try">voice:female</code></td><td>Lifepath (corpo, nomad, streetkid), V's body, V's voice</td></tr>
+<tr><td><code class="try">kind:manual</code> <code class="try">playthrough:2</code> <code class="try">version:2.5</code></td><td>Kind (manual, auto, quick, ponr, endgame), playthrough, game version</td></tr>
+<tr><td><code class="try">pl:yes</code> <code class="try">ponr:no</code> <code class="try">modded:yes</code> <code class="try">difficulty:veryhard</code></td><td>Phantom Liberty, point of no return, modded, difficulty</td></tr>
+<tr><td><code class="try">level:&gt;40</code> <code class="try">cred:20-30</code> <code class="try">hours:&lt;100</code></td><td>Level, Street Cred, play time in hours</td></tr>
+<tr><td><code class="try">body:&gt;=15</code> <code class="try">int:20</code> <code class="try">ref:&gt;10</code> <code class="try">tech:5-10</code> <code class="try">cool:&lt;8</code></td><td>Attributes: Body, Intelligence, Reflexes, Technical Ability, Cool</td></tr>
+<tr><td><code class="try">date:2026-11</code> <code class="try">date:&gt;2026-10-01</code> <code class="try">date:&lt;2025</code></td><td>When it was saved</td></tr>
+<tr><td><code class="try">quest:q112</code> <code class="try">fact:q112_takemura_dead=0</code></td><td>A finished quest (by id), a quest fact and its value. Click either in a save's details to add it</td></tr>
+<tr><td><code class="try">-word</code> <code class="try">-kind:auto</code></td><td>A minus leaves out what matches</td></tr>
 </table>
-<p>Filters with the same key match any of their values (<code>lifepath:corpo lifepath:nomad</code>); different keys must all match. Quotes keep spaces together.</p>`;
+<p>Filters with the same key match any of their values (<code class="try">lifepath:corpo lifepath:nomad</code>); different keys must all match. Quotes keep spaces together.</p>`;
+
+// An example in the help puts itself in the box and searches with it.
+$("help").addEventListener("click", (e) => {
+  const example = (e.target as HTMLElement).closest<HTMLElement>("code.try");
+  if (example) setQuery(example.textContent ?? "");
+});
 
 function showHelp(): void {
   $("help").hidden = !help;

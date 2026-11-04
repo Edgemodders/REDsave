@@ -2,7 +2,7 @@
   "name": "redsave",
   "displayName": "REDsave",
   "description": "Save game manager for Cyberpunk 2077: search and filter your saves, keep sets of them outside the game and swap them in, and give saves your own titles.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "edgemodders",
   "preview": true,
   "pricing": "Free",

@@ -16,13 +16,14 @@ Last updated 2026-11-03.
 | Release workflow, packaging only (no box ticked) | On GitHub, publishes nothing | S0 | 2026-11-03 | Pass: the .vsix and the Nexus zip as the run's artifact (run 41738195720) |
 | `listSaves` on the dev PC's save folder | By script, read only | S0 | 2026-11-03 | 970 saves in 137 ms, each with its metadata; 23 empty save folders left out |
 | [S1 on the dev PC's saves, outside VS Code](#s1-on-the-dev-pcs-saves-outside-vs-code) | By script, read only | S1 | 2026-11-03 | Pass |
-| [S1 Find hand test](#s1-find) | By hand, F5 | S1 | | To run |
+| [S1 Find hand test](#s1-find) | By hand, installed .vsix | S1 | 2026-11-03 | Pass, all 14 steps (REDsave 0.0.4) |
+| [Search help examples](#search-help-examples-005) | By hand | S1 | | To run (REDsave 0.0.5) |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.4 (S1 Find) | [S1 Find](#s1-find) |
+| REDsave 0.0.5 (clickable help examples) | [Search help examples](#search-help-examples-005) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -82,3 +83,16 @@ REDsave 0.0.4. In VS Code, with this repo open: `npm install` once, then **F5** 
 14. In the Development Host's settings, set **REDsave: Saves Path** to a folder with no saves (an empty new folder). The side bar shows "The game's save folder was not found", and the page says there are no saves. Clear the setting: the saves come back.
 
 After the test, tell Claude which steps passed, and what looked wrong or slow.
+
+**Result, 2026-11-03:** all 14 steps passed, on REDsave 0.0.4 installed from its .vsix. The owner's suggestion: make the help's examples clickable, so a click fills the box and searches (built in 0.0.5, below).
+
+### Search help examples (0.0.5)
+
+REDsave 0.0.5, installed from `redsave-0.0.5.vsix` over 0.0.4.
+
+1. Open the Saves page and click **Search help**. The examples are in yellow; hovering one underlines it and outlines it.
+2. Click `level:>40`. The box says `level:>40` and the list shows only saves above level 40 (828 of 970 on the dev PC on 2026-11-03).
+3. Click `ref:>10`, then `-kind:auto`. Each one replaces what was in the box and searches with it.
+4. Click `lifepath:corpo lifepath:nomad` in the last line: the box says both, and the list shows Corpo and Nomad saves. Click **Hide help**.
+
+Checked in headless Chrome on 2026-11-03: clicking `level:>40` filled the box and gave 828 of 970.

@@ -33,6 +33,8 @@ select { background: var(--vscode-dropdown-background); color: var(--vscode-drop
 .help p { margin: 4px 0; }
 .help table { border-collapse: collapse; }
 .help td { padding: 2px 12px 2px 0; vertical-align: top; }
+.help code.try { color: var(--yellow); cursor: pointer; }
+.help code.try:hover { text-decoration: underline; outline: 1px solid var(--yellow); }
 
 .chips { margin-top: 8px; display: grid; gap: 4px; }
 .row { display: grid; grid-template-columns: 130px 1fr; gap: 8px; align-items: baseline; }

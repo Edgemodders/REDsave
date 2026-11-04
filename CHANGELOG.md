@@ -14,7 +14,7 @@ How to keep it (the Edgemodders convention):
 
 - The Saves page: every save with its picture, title, main quest, place, lifepath, V, level, Street Cred, kind, date and play time, newest first.
 - Search saves by words (title, quest, place, lifepath, folder), and filter them with chips: lifepath, V's body, V's voice, difficulty, kind, playthrough, game version, Phantom Liberty, point of no return, modded. Each chip shows how many saves it leaves.
-- Filters typed in the search box too: ranges for level, Street Cred, play time and the five attributes (`level:>40`), dates (`date:2026-11`), finished quests (`quest:q112`) and quest facts (`fact:q112_takemura_dead=0`); a minus leaves out what matches. **Search help** on the page lists them.
+- Filters typed in the search box too: ranges for level, Street Cred, play time and the five attributes (`level:>40`), dates (`date:2026-11`), finished quests (`quest:q112`) and quest facts (`fact:q112_takemura_dead=0`); a minus leaves out what matches. **Search help** on the page lists them, and clicking an example there runs it.
 - Sort by date, play time, level or title, and group by playthrough.
 - Select saves with Ctrl and Shift clicks or **Select all**, and show them in Explorer.
 - A save's details: every field its metadata has, with its finished quests and quest facts, each one click away from a filter.

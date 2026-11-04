@@ -19,7 +19,7 @@ A save game manager for Cyberpunk 2077, as a VS Code extension. Hundreds of save
 **[Docs](https://edgemodders.github.io/REDsave/)** &middot; [Design](docs/design.md) &middot; [Changelog](CHANGELOG.md) &middot; [Tests](docs/testing.md)
 
 > [!NOTE]
-> **Status: S1 Find built, not released yet.** REDsave 0.0.4 (2026-11-03) finds saves: the Saves page with search, filter chips, ranges, sort, groups by playthrough, selection and every save's details, with quest and place names through REDbridge. It awaits its hand test. Next is S2, loadouts. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
+> **Status: S1 Find done, not released yet.** REDsave 0.0.5 (2026-11-03) finds saves: the Saves page with search, filter chips, ranges, sort, groups by playthrough, selection and every save's details, with quest and place names through REDbridge. It passed its hand test on 2026-11-03. Next is S2, loadouts. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
 
 ## Repo layout
 
