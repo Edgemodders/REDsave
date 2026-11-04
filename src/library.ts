@@ -39,6 +39,8 @@ interface LibraryFile {
   inGame: string | null;
   loadouts: Loadout[];
   journal?: Journal;
+  /** Loadouts removed lately, so an undo into one (or a folder of one found again) gets its name back. */
+  removed?: Loadout[];
 }
 
 export const defaultLibraryPath = (home = os.homedir()) => path.join(home, "Saved Games", "REDsave");
@@ -60,7 +62,7 @@ export class Library {
   constructor(readonly root: string) {
     try {
       const d = JSON.parse(fs.readFileSync(this.file, "utf8"));
-      if (d?.format === 1) this.data = { format: 1, inGame: d.inGame ?? null, loadouts: d.loadouts ?? [], journal: d.journal };
+      if (d?.format === 1) this.data = { format: 1, inGame: d.inGame ?? null, loadouts: d.loadouts ?? [], journal: d.journal, removed: d.removed ?? [] };
     } catch {
       // no library yet: made at the first loadout
     }
@@ -153,7 +155,48 @@ export class Library {
     }
     this.data.loadouts = this.data.loadouts.filter((x) => x.id !== id);
     if (this.data.inGame === id) this.data.inGame = null;
+    this.data.removed = [l, ...(this.data.removed ?? []).filter((x) => x.id !== id)].slice(0, 50);
     this.save();
+  }
+
+  /**
+   * Lists again every folder in loadouts\ that holds anything but is not in the list: a removed
+   * loadout an undo moved saves back into, or a library.json lost or edited by hand. A removed
+   * loadout gets its name and notes back; any other folder a name made from its folder's name.
+   * Empty folders that are not loadouts are removed (rmdir, so only empty ones). Returns the
+   * loadouts listed again, with how many items their folders hold.
+   */
+  adopt(): { loadout: Loadout; items: number }[] {
+    let dirs: string[] = [];
+    try {
+      dirs = fs.readdirSync(path.join(this.root, "loadouts"), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+    } catch {
+      return [];
+    }
+    const found: { loadout: Loadout; items: number }[] = [];
+    for (const id of dirs) {
+      if (this.loadout(id)) continue;
+      const dir = this.dirOf(id);
+      const items = fs.readdirSync(dir).length;
+      if (!items) {
+        try {
+          fs.rmdirSync(dir);
+        } catch {
+          // in use: left for next time
+        }
+        continue;
+      }
+      const old = this.data.removed?.find((x) => x.id === id);
+      let name = old?.name ?? (id.replace(/-[0-9a-f]{6}$/, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || id);
+      if (this.data.loadouts.some((x) => x.name.toLowerCase() === name.toLowerCase())) name = `${name} (found again)`;
+      const note = `Listed again by REDsave on ${new Date().toISOString().slice(0, 10)}: its folder held saves but it was not in the list.`;
+      const l: Loadout = { id, name, notes: old?.notes ? `${old.notes}\n${note}` : note, created: old?.created ?? Date.now() };
+      this.data.loadouts.push(l);
+      this.data.removed = (this.data.removed ?? []).filter((x) => x.id !== id);
+      found.push({ loadout: l, items });
+    }
+    if (found.length) this.save();
+    return found;
   }
 
   private need(id: string): Loadout {

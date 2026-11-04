@@ -168,6 +168,13 @@ export function activate(context: vscode.ExtensionContext): void {
     tab.show();
   };
 
+  /** Lists again loadout folders with saves that are not in the list, and says so. */
+  const adopt = () => {
+    const found = library.adopt();
+    for (const f of found) log.appendLine(`Listed again: ${f.loadout.name} (${library.dirOf(f.loadout.id)}, ${plural(f.items, "item")})`);
+    if (found.length) void vscode.window.showInformationMessage(`REDsave found ${found.map((f) => `${f.loadout.name} (${plural(f.items, "save")})`).join(", ")} again and lists ${found.length === 1 ? "it" : "them"} under Loadouts: ${found.length === 1 ? "its folder holds" : "their folders hold"} saves.`);
+  };
+
   const scan = (moved = false) => {
     const dir = savesPath();
     const r = index.scan(dir, "game");
@@ -248,6 +255,8 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     busy = false;
     log.appendLine(`${label}: ${result.moved} moved${result.error ? `; stopped: ${result.error}` : ""}`);
+    // an undo into a removed loadout brings the loadout back with its saves
+    adopt();
     scan(true);
     const journal = result.journal.id;
     if (result.error) {
@@ -349,6 +358,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration("redsave.libraryPath")) {
         library = new Library(libraryPath());
         for (const t of tabs.values()) t.close();
+        adopt();
       }
       if (e.affectsConfiguration("redsave.savesPath") || e.affectsConfiguration("redsave.libraryPath")) {
         scan();
@@ -365,6 +375,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const failed = done.failed.length ? ` ${plural(done.failed.length, "save")} could not be moved: ${done.failed.map((f) => `${path.basename(f.from)} (${f.error})`).join("; ")}.` : "";
     void vscode.window.showWarningMessage(`REDsave finished a move that was cut short: ${done.label}. ${plural(done.finished, "save")} moved.${failed}`);
   }
+  adopt();
   scan();
   watch();
 }

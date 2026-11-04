@@ -202,3 +202,38 @@ test("undo puts the last move's saves back, with a new number if their name was 
     s.done();
   }
 });
+
+test("a removed loadout an undo moved saves back into is listed again, with its name", async () => {
+  const s = scratch();
+  try {
+    const l = s.lib.create("Street Kid");
+    const a = s.save(s.lib.dirOf(l.id), "ManualSave-610");
+    // Move all to the game, remove the empty loadout, then undo: the owner's steps on 2026-11-03.
+    await runMove(planMove([{ dir: a, where: l.id }], { where: "game", dir: s.game, name: "the game" }), s.lib, { label: "Move 1 save to the game", touchesGame: true, isGameRunning: closed });
+    s.lib.remove(l.id);
+    const u = undoPlan(s.lib)!;
+    await runMove({ target: { where: "", dir: "", name: "" }, items: u.items, already: 0 }, s.lib, { label: u.label, touchesGame: true, isGameRunning: closed, undoOf: u.of });
+    assert.ok(fs.existsSync(path.join(s.lib.dirOf(l.id), "ManualSave-610", "sav.dat")), "the save is back in the loadout's folder");
+    assert.equal(s.lib.loadout(l.id), undefined, "but the loadout is not in the list yet");
+    const found = s.lib.adopt();
+    assert.deepEqual(found.map((f) => [f.loadout.name, f.items]), [["Street Kid", 1]]);
+    assert.equal(new Library(s.lib.root).loadout(l.id)?.name, "Street Kid", "listed again, kept in library.json");
+    assert.deepEqual(s.lib.adopt(), [], "once");
+  } finally {
+    s.done();
+  }
+});
+
+test("a loadout folder REDsave never knew gets a name from its folder; an empty stray folder is removed", () => {
+  const s = scratch();
+  try {
+    s.save(path.join(s.lib.root, "loadouts", "street-kid-41c496"), "ManualSave-1");
+    fs.mkdirSync(path.join(s.lib.root, "loadouts", "empty-aaaaaa"), { recursive: true });
+    const found = s.lib.adopt();
+    assert.deepEqual(found.map((f) => f.loadout.name), ["Street Kid"]);
+    assert.match(found[0].loadout.notes, /Listed again by REDsave/);
+    assert.ok(!fs.existsSync(path.join(s.lib.root, "loadouts", "empty-aaaaaa")));
+  } finally {
+    s.done();
+  }
+});

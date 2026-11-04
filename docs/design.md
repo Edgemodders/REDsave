@@ -227,7 +227,9 @@ REDsave 0.0.6, built on 2026-11-03; 0.0.7 fixes what its first hand test found a
 | `src/page.ts`, `webview/page.ts` | A tab per loadout: the header, its saves, **Add saves...** (a picker of every save elsewhere) and **Move to...**; **Move to loadout...** on the Saves page; where a save is shown in cyan when a list has more than one place |
 | `src/search.ts` | The **Where** chip and `where:` (`where:game`, `where:"Dogtown run"`) |
 
-Checked on 2026-11-03: 29 unit tests; an end-to-end script on a scratch copy of the 60 test saves (13 saves moved by rename in 28 ms, 5 copied to a library on E: in 46 ms and back by undo, a move cut short finished, all 60 saves accounted for); the loadout tab and its picker in headless Chrome.
+The owner's hand test (2026-11-03) found that an undo into a removed loadout put its saves back in the folder but not the loadout in the list. REDsave 0.0.8 remembers removed loadouts (`removed` in `library.json`, the last 50) and lists again any folder in `loadouts\` that holds anything but is not in the list (`Library.adopt`, at start, after a library change and after every move), with its old name, or one made from its folder's name, and a note; an empty stray folder is removed.
+
+Checked on 2026-11-03: 29 unit tests (31 with 0.0.8's); an end-to-end script on a scratch copy of the 60 test saves (13 saves moved by rename in 28 ms, 5 copied to a library on E: in 46 ms and back by undo, a move cut short finished, all 60 saves accounted for); the loadout tab and its picker in headless Chrome.
 
 #### Decided for S2
 

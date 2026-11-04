@@ -17,16 +17,15 @@ Last updated 2026-11-03.
 | `listSaves` on the dev PC's save folder | By script, read only | S0 | 2026-11-03 | 970 saves in 137 ms, each with its metadata; 23 empty save folders left out |
 | [S1 on the dev PC's saves, outside VS Code](#s1-on-the-dev-pcs-saves-outside-vs-code) | By script, read only | S1 | 2026-11-03 | Pass |
 | [S1 Find hand test](#s1-find) | By hand, installed .vsix | S1 | 2026-11-03 | Pass, all 14 steps (REDsave 0.0.4) |
-| [Search help examples](#search-help-examples-005) | By hand | S1 | | To run (REDsave 0.0.5) |
+| [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
-| [S2a Library and Move hand test](#s2a-library-and-move) | By hand, on the test copy | S2a | 2026-11-03 | 0.0.6 stopped at step 5 (fixed in 0.0.7); steps 5 to 11 to run on 0.0.7 |
+| [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Steps passed on 0.0.7 (0.0.6 stopped at step 5); found: an undo into a removed loadout left its saves unlisted (fixed in 0.0.8, to check) |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.5 (clickable help examples) | [Search help examples](#search-help-examples-005) |
-| REDsave 0.0.7 (S2a Library and Move) | [S2a Library and Move](#s2a-library-and-move), from step 5 |
+| REDsave 0.0.8 (a removed loadout listed again) | [S2a Library and Move](#s2a-library-and-move), "Second run" |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -133,3 +132,13 @@ Before step 1: install `redsave-0.0.6.vsix` over 0.0.5, then in VS Code's settin
 After the test, tell Claude which steps passed, and anything that looked wrong, slow or unclear.
 
 **First run, 2026-11-03, REDsave 0.0.6:** steps 1 to 4 passed. At step 5, **Move to loadout...** only said "REDsave is moving saves already": REDsave stayed busy until step 4's notice (with its Undo and Open buttons) was closed. REDsave 0.0.7 ends the busy state as soon as the saves have moved, and a notice's **Undo** undoes only its own move (if a newer move came after, it says so instead of undoing the newer one). The retest goes on from step 5 on 0.0.7, with the library as step 4 left it.
+
+**Second run, 2026-11-03, REDsave 0.0.7:** every step worked as written, and the Search help examples (0.0.5) passed too. The owner found one problem: after moving all of a new loadout's saves into the game, removing the empty loadout and choosing **Undo the Last Move**, the undo put the saves back into the removed loadout's folder, and REDsave did not list that loadout again, so the saves showed nowhere. Claude read the library afterwards: the moves had run on the **real** save folder and the default library (`Saved Games\REDsave`), not the test folders, so the two path settings were not in effect during the run. Nothing was lost: the real save folder had 75 fewer save folders (918 entries, 993 before), all 75 in the library: 53 in the loadout Corpo Male V Saves, 22 in the removed loadout's folder `loadouts\street-kid-41c496`.
+
+REDsave 0.0.8 fixes it: a removed loadout's name is remembered, and any folder in `loadouts\` that holds saves but is not in the list is listed again (at start, after a library change and after every move), with its old name or one made from its folder's name, and a notice saying so. The test's 22 saves come back as **Street Kid**.
+
+Check for 0.0.8, on the library as the second run left it:
+
+1. Install `redsave-0.0.8.vsix` over 0.0.7. A notice says REDsave found Street Kid (22 saves) again, and **Street Kid** is under Loadouts with 22, its notes saying it was listed again.
+2. Open **Street Kid** and **Corpo Male V Saves**: 22 and 53 saves.
+3. To put your real saves back where they were: in each of the two loadouts' tabs, press **Select all**, then **Move to...** > **In the game** > **Move** (with the game closed). In the game has every save again, and REDsave's library is empty. Then remove the two empty loadouts.
