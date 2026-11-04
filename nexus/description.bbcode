@@ -9,11 +9,14 @@
 [center][color=#f6b26b][size=3][i]This is an early preview release.[/i][/size][/color][/center]
 [line]
 
-[quote][size=4][b][color=#fcee0a]STATUS: NOT RELEASED YET[/color][/b][/size]
-(STATUS: what has passed its hand tests, and what is new in this release.)
+[quote][size=4][b][color=#fcee0a]STATUS: PREVIEW, THE FIRST RELEASE[/color][/b][/size]
+Tested by hand on a library of nearly a thousand saves: finding saves, loadouts and swaps (with Steam Cloud on, which showed no sync errors), titles in the game's own Load Game, and Run Game. New features land in small updates.
 [b]This is not a game mod.[/b] It is an extension for VS Code, so install it there (steps below), not with Vortex. The quickest way is straight from the [url=https://marketplace.visualstudio.com/items?itemName=Edgemodders.redsave]VS Code Marketplace[/url] or [url=https://open-vsx.org/extension/edgemodders/redsave]Open VSX[/url]; the file here is the same extension.[/quote]
+[img]https://staticdelivery.nexusmods.com/mods/3333/images/37205/37205-1793790440-1143989366.png[/img]
 
-(SCREENSHOT: the save browser, with a search and filters)
+[img]https://staticdelivery.nexusmods.com/mods/3333/images/37205/37205-1793790458-1138586058.png[/img]
+
+[img]https://staticdelivery.nexusmods.com/mods/3333/images/37205/37205-1793790471-249682364.png[/img]
 
 [size=5][b][color=#fcee0a]What REDsave is[/color][/b][/size]
 
@@ -22,37 +25,43 @@ REDsave is built by [url=https://edgemodders.ai/]EDGEmodders[/url], a modding co
 [size=5][b][color=#fcee0a]Highlights[/color][/b][/size]
 
 [size=4][b][color=#19f3ff]Find any save[/color][/b][/size]
-Every save with its picture, its quest and place, V's lifepath, body and voice, level, Street Cred, difficulty, play time and date. Search by words, and filter by lifepath, V, playthrough, kind of save, game version, Phantom Liberty, level and date.
+Every save with its picture, its quest and place, V's lifepath, body and voice, level, Street Cred, difficulty, play time and date. Search by words, click chips to filter by lifepath, V, playthrough, kind of save, game version or Phantom Liberty (each chip shows how many saves it leaves), or type filters such as [i]level:>40[/i], [i]date:2026-11[/i] or a story choice, [i]fact:q112_takemura_dead=0[/i]. Group by playthrough, and open a save's details for everything it says.
 
 [size=4][b][color=#19f3ff]Loadouts of saves[/color][/b][/size]
-Keep sets of saves outside the game's save folder: one per playthrough, one for testing a mod, one for a friend's V. Swap a set in before you play, and the one you had goes back to the library. Nothing is deleted.
+Keep sets of saves outside the game's save folder: one per playthrough, one for testing a mod, one for a friend's V. Each loadout opens in its own tab, where [b]Add saves...[/b] picks saves from everywhere else with the same search. [b]Swap In[/b] puts a whole loadout into the game, and the saves that were there go to the loadout they belong to.
+
+Moves are careful: never while the game runs, nothing deleted, every move written down first and finished if VS Code closes partway, and [b]Undo the Last Move[/b] puts the saves back.
 
 [size=4][b][color=#19f3ff]Titles of your own[/color][/b][/size]
-Call a save "Before the heist, Takemura alive" instead of a quest name, and find it again by that.
+Call a save "Clampdown: Takemura alive" instead of only its quest name, and see it in the game's own [b]Load Game[/b] too. [b]Add to titles...[/b] tags several saves at once, and [b]Reset title[/b] gives the game's title back. The game's title stays inside the save, so it can always be put back.
 
-(SCREENSHOT: loadouts in the side bar)
+[size=4][b][color=#19f3ff]Run the game[/color][/b][/size]
+The play button at the top of REDsave's side bar starts the game, through [url=https://www.nexusmods.com/cyberpunk2077/mods/35420]EDGEdeck[/url] when it is installed, so your mod changes deploy first.
 
 [size=5][b][color=#fcee0a]Install[/color][/b][/size]
 
 [list=1]
-[*]In VS Code (or VSCodium, or EDGEkit), open the Extensions view (Ctrl+Shift+X).
-[*]Click [b]...[/b] at its top, choose [b]Install from VSIX...[/b], and pick the .vsix from this file.
-[*]Open [b]REDsave[/b] in the side bar.
+[*]In VS Code (or VSCodium, or EDGEkit), open the Extensions view (Ctrl+Shift+X).[/*]
+[*]Search for [b]REDsave[/b] and install it; or click [b]...[/b] at its top, choose [b]Install from VSIX...[/b], and pick the .vsix from this file.[/*]
+[*]Open [b]REDsave[/b] in the activity bar: the floppy disk.[/*]
 [/list]
+The [url=https://edgemodders.github.io/REDsave/guide.html]player guide[/url] shows the rest.
 
 [size=5][b][color=#fcee0a]Requirements[/color][/b][/size]
 
 [list]
-[*]Windows 10 or 11, and Cyberpunk 2077 on PC (Steam, GOG or Epic).
-[*]VS Code 1.90 or later, or VSCodium, or EDGEkit.
+[*]Windows 10 or 11, and Cyberpunk 2077 on PC (Steam, GOG or Epic).[/*]
+[*]VS Code 1.90 or later, or VSCodium, or EDGEkit.[/*]
+[*]Optional: REDbridge, which EDGEdeck or REDcode install, for quest and place names from your copy of the game. Without it, saves show their quest's id.[/*]
 [/list]
 
 [size=5][b][color=#fcee0a]Links[/color][/b][/size]
 
 [list]
-[*][url=https://edgemodders.github.io/REDsave/]Docs[/url]
-[*][url=https://github.com/Edgemodders/REDsave]Source and issues on GitHub[/url]
-[*][url=https://github.com/Edgemodders/REDsave/blob/main/CHANGELOG.md]Changelog[/url]
+[*][url=https://edgemodders.github.io/REDsave/guide.html]Player guide[/url][/*]
+[*][url=https://edgemodders.github.io/REDsave/]Docs[/url][/*]
+[*][url=https://github.com/Edgemodders/REDsave]Source and issues on GitHub[/url][/*]
+[*][url=https://github.com/Edgemodders/REDsave/blob/main/CHANGELOG.md]Changelog[/url][/*]
 [/list]
 
 [size=2]REDsave is not affiliated with CD Projekt RED. MIT licence.[/size]

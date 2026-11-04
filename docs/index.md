@@ -12,7 +12,7 @@ REDsave is a VS Code extension that looks after Cyberpunk 2077's save games. Fin
 
 ## Roadmap status
 
-As of 2026-11-03. Nothing is released yet. Each phase ends with a hand test by the owner.
+As of 2026-11-04. 0.1.0 is the first release. Each phase ends with a hand test by the owner.
 
 | Phase | Status |
 |---|---|
@@ -20,6 +20,6 @@ As of 2026-11-03. Nothing is released yet. Each phase ends with a hand test by t
 | S1 Find | Done 2026-11-03: search, filters, sort, groups, selection, details and names passed the hand test (0.0.4); 0.0.5's clickable help examples await a short check |
 | S2 Loadouts | S2a Library and Move done 2026-11-03 (REDsave 0.0.8); S2b Swap done 2026-11-03 (passed its hand test, Steam Cloud quiet, a renumbered save loads). REDsave 0.0.11 adds Run Game |
 | S3 Titles | S3a spike done 2026-11-03 (way A: a title in the save's metadata shows in the game); S3b Titles done 2026-11-04 (REDsave 0.0.12, passed its hand test) |
-| S4 First release | Next |
+| S4 First release | 0.1.0 prepared 2026-11-04: every hand test passed; the release run is the owner's to start |
 
 REDsave is not affiliated with CD Projekt RED. Source code and issues: [github.com/Edgemodders/REDsave](https://github.com/Edgemodders/REDsave)
