@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://edgemodders.github.io/REDsave/"><img src="docs/assets/brand/badges/docs.svg" alt="docs: read the docs"></a>
-  <img src="docs/assets/brand/badges/status.svg" alt="status: S3b titles">
+  <img src="docs/assets/brand/badges/status.svg" alt="status: S3 done">
   <img src="docs/assets/brand/badges/game.svg" alt="game: Cyberpunk 2077">
   <img src="docs/assets/brand/badges/vscode.svg" alt="runs in: VS Code">
   <a href="LICENSE"><img src="docs/assets/brand/badges/license.svg" alt="license: MIT"></a>
@@ -19,7 +19,7 @@ A save game manager for Cyberpunk 2077, as a VS Code extension. Hundreds of save
 **[Docs](https://edgemodders.github.io/REDsave/)** &middot; [Design](docs/design.md) &middot; [Changelog](CHANGELOG.md) &middot; [Tests](docs/testing.md)
 
 > [!NOTE]
-> **Status: S3b Titles built, not released yet.** REDsave 0.0.12 (2026-11-03) finds saves (S1, which passed its hand test on 2026-11-03) and keeps loadouts: sets of saves outside the game's folder, each in its own tab, with saves moved in and out safely (a journal, undo, never while the game runs); both passed their hand tests on 2026-11-03. S2b swaps a whole loadout into the game (passed its hand test on 2026-11-03: Steam Cloud showed no errors, and a renumbered save loads). A **Run Game** button starts the game. S3 gives saves titles of your own, shown in the game's Load Game too: built in REDsave 0.0.12, awaiting its hand test. Then S4, the first release. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
+> **Status: S3 Titles done, not released yet.** REDsave 0.0.12 (2026-11-03) finds saves (S1, which passed its hand test on 2026-11-03) and keeps loadouts: sets of saves outside the game's folder, each in its own tab, with saves moved in and out safely (a journal, undo, never while the game runs); both passed their hand tests on 2026-11-03. S2b swaps a whole loadout into the game (passed its hand test on 2026-11-03: Steam Cloud showed no errors, and a renumbered save loads). A **Run Game** button starts the game. S3 gives saves titles of your own, shown in the game's Load Game too: it passed its hand test on 2026-11-04 (REDsave 0.0.12). Next is S4, the first release. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
 
 ## Repo layout
 

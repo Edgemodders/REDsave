@@ -20,7 +20,7 @@ Last updated 2026-11-03.
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
-| [S3b Titles](#s3b-titles) | By hand, in the game | S3b | | To run (REDsave 0.0.12) |
+| [S3b Titles](#s3b-titles) | By hand, in the game | S3b | 2026-11-04 | Pass, all 7 steps |
 | [S3a Title spike](#s3a-title-spike) | By hand, in the game | S3a | 2026-11-03 | Pass: copy A's plain-text title shows in Load Game; the original and both copies load and play |
 | [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | 2026-11-03 | Pass, 3 steps |
 | [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Pass: part A (steps 0 to 7) and part B (Steam Cloud quiet, a renumbered save loads) |
@@ -30,7 +30,7 @@ Last updated 2026-11-03.
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.12 (S3b Titles) | [S3b Titles](#s3b-titles) |
+| None | |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -235,3 +235,5 @@ REDsave 0.0.12, on your real save folder (both path settings empty), with the ga
 7. While the game runs (start it, stay at the main menu), try **Set title...**: REDsave says the game is running and changes nothing. Quit the game.
 
 After the test, tell Claude which steps passed, and anything that looked wrong or unclear.
+
+**Result, 2026-11-04, REDsave 0.0.12:** all 7 steps passed as written: titles set, added to several saves and changed show in REDsave and in the game's Load Game, a titled save loads and plays, resets give the game's titles back, and nothing changes while the game runs.

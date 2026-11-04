@@ -311,7 +311,7 @@ Copy B tells whether `userName` shows anywhere (the scripts say no).
 
 ### S3b: built
 
-REDsave 0.0.12, built on 2026-11-03 with the owner's agreement to the plan the same day: the save's own quest kept in its `userName`, the box starting with the quest's name and ": ", adding text to several saves at once. Awaiting the owner's hand test ([Tests](testing.html), "S3b Titles").
+REDsave 0.0.12, built on 2026-11-03 with the owner's agreement to the plan the same day: the save's own quest kept in its `userName`, the box starting with the quest's name and ": ", adding text to several saves at once. **Passed the owner's hand test on 2026-11-04** ([Tests](testing.html), "S3b Titles").
 
 | Where | What |
 |---|---|
