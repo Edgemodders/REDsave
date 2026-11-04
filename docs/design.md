@@ -209,20 +209,37 @@ Saved Games\REDsave\               redsave.libraryPath
   loadouts\<id>\                   a loadout's save folders, exactly as the game wrote them
 ```
 
-The index reads each loadout's folder as it reads the game's, so search, chips and details work across all of them, and a save keeps its record when it moves (a moved folder is stamped the same, so only its place changes).
+The index reads each loadout's folder as it reads the game's, so search, chips and details work across all of them. A moved save is read again at its new place (6 KB of metadata, so it costs nothing to notice).
 
 #### Steam Cloud (S2b)
 
 The game's folder has `steam_autocloud.vdf`. Before the first swap or move out of the game's folder on a PC with it, REDsave explains once: the saves are kept in REDsave's library, and Steam's cloud copy follows what is in the game's folder. S2b's test checks what Steam really does, on the dev PC with one throwaway save: make a manual save, move it out, start the game through Steam, and see whether Steam brings it back, asks about a conflict, or leaves it gone. If Steam brings saves back, swaps would leave copies in the game's folder (no loss, but not what a swap means), and S2b stops there to agree a fix with the owner.
 
-#### Open questions for S2
+#### S2a: built
 
-| Question | Recommendation |
+REDsave 0.0.6, built on 2026-11-03, awaiting the owner's hand test ([Tests](testing.html), "S2a Library and Move"), on the test copy of 60 saves in `C:\Users\VYRAL\Saved Games\REDsave-test\saves`.
+
+| File | What it does |
+|---|---|
+| `src/library.ts` | `Library`: `library.json` (format, the loadout in the game, the loadouts, the journal of the last move), written whole through a temporary file; loadouts made, renamed, given notes, and removed only when their folder is empty (Windows' rmdir refuses anything else); `within` keeps the library and the game's folder apart |
+| `src/move.ts` | `planMove` (saves already there left alone, taken names given the next free number), `runMove` (the game-running check through `tasklist`, every source checked for `sav.dat`, room per target drive, the journal before the first folder, a rename on the same drive or a copy checked file by file with the files' times kept, then the source removed), `recover` (a move cut short finished at the next start, a half-made copy beside a whole source redone), `undoPlan` (the last move put back, old names first, then new numbers for names taken since; an undo is not undone) |
+| `src/extension.ts` | The side bar: **In the game** (its kinds and playthroughs inside it) and **Loadouts** with **+**, its children, their menus (Open, Rename, Notes, Open Its Folder, Remove) and **Undo the Last Move**; one question with the counts before each move; a progress notice; recovery at start |
+| `src/page.ts`, `webview/page.ts` | A tab per loadout: the header, its saves, **Add saves...** (a picker of every save elsewhere) and **Move to...**; **Move to loadout...** on the Saves page; where a save is shown in cyan when a list has more than one place |
+| `src/search.ts` | The **Where** chip and `where:` (`where:game`, `where:"Dogtown run"`) |
+
+Checked on 2026-11-03: 29 unit tests; an end-to-end script on a scratch copy of the 60 test saves (13 saves moved by rename in 28 ms, 5 copied to a library on E: in 46 ms and back by undo, a move cut short finished, all 60 saves accounted for); the loadout tab and its picker in headless Chrome.
+
+#### Decided for S2
+
+Agreed with the owner on 2026-11-03, with the tree and tab approach above:
+
+| Question | Decision |
 |---|---|
 | Split S2 into S2a (Move, on a copy) and S2b (Swap, the real folder)? | Yes: the move rules are proven before the real saves are moved |
 | Moves between loadouts while the game runs | Allowed; only moves into or out of the game's folder wait for the game to close |
-| A loadout with saves: remove it? | No; offer **Move all to...** first. A loadout can be removed only when empty |
+| A loadout with saves: remove it? | No; **Move all to...** is offered first. A loadout can be removed only when empty |
 | The test copy for S2a | Claude copies 60 saves (all kinds, three playthroughs) from the real folder into a test folder, reading the real one only |
+| Folders of loadouts | One level to start with; decided after some testing |
 
 ### Later: copies by hard link
 
@@ -241,6 +258,8 @@ The first step is a short test with a throwaway save: make a new manual save, li
 ## Titles (S3)
 
 The player gives a save a title of their own. REDsave always shows it, searches it and keeps it in `titles.json` by the save's identity (`playthroughID` plus `timestampString` and `playTime`), so it follows the save into and out of loadouts.
+
+The owner's wish (2026-11-03): edit the name a save shows **in the game's load menu**, adding text of their own to tell one save from another, such as "Clampdown: Takemura alive" where the menu now says only "Clampdown". So S3's title is the quest name plus the player's text by default, and the whole name can be replaced.
 
 Whether the **game's** load menu can show it is open. S3a is a spike to find out, on copies of saves only:
 

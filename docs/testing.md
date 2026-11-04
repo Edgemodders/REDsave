@@ -18,12 +18,15 @@ Last updated 2026-11-03.
 | [S1 on the dev PC's saves, outside VS Code](#s1-on-the-dev-pcs-saves-outside-vs-code) | By script, read only | S1 | 2026-11-03 | Pass |
 | [S1 Find hand test](#s1-find) | By hand, installed .vsix | S1 | 2026-11-03 | Pass, all 14 steps (REDsave 0.0.4) |
 | [Search help examples](#search-help-examples-005) | By hand | S1 | | To run (REDsave 0.0.5) |
+| [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
+| [S2a Library and Move hand test](#s2a-library-and-move) | By hand, on the test copy | S2a | | To run (REDsave 0.0.6) |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
 | REDsave 0.0.5 (clickable help examples) | [Search help examples](#search-help-examples-005) |
+| REDsave 0.0.6 (S2a Library and Move) | [S2a Library and Move](#s2a-library-and-move) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -43,6 +46,7 @@ npm test
 | `test/metadata.test.ts` | The timestamp (time, then day.month.year), the quest id, every field of a record, missing fields left unknown, a broken metadata file |
 | `test/search.test.ts` | Parsing the box, words (any case and accents), chips (one key any value, two keys both, minus), playthrough numbers, ranges, dates, quests, facts, chip counts, sort, titles without names, game versions newest first, turning chips on and off |
 | `test/index.test.ts` | The index's cache: each save read once, read again when changed, dropped when removed |
+| `test/move.test.ts` | The library (make, rename, notes, remove only when empty), nested folders kept apart, the next free number, plans (saves already there, taken names), a move by rename (every file, the files' times, the journal on disk), a move by copy (checked, times kept, the source removed after), no move while the game runs (but between loadouts), none when a save has gone, never overwriting, a move cut short finished, undo (old names first, new numbers for names taken since, no undo of an undo) |
 
 The tests use made-up metadata (`test/fixture.ts`), never a player's saves.
 
@@ -58,6 +62,17 @@ Run on 2026-11-03 with a scratch script that bundles `src/index.ts`, `src/names.
 | Names | REDbridge 0.11.0 from EDGEdeck: 126 LocKeys in 4.5 s, 2 with no text |
 | Searches | `little china` 243, `gender:male` 118, `playthrough:1` 828, `kind:quick` 10, `fact:q112_takemura_dead=0` 821, `lifepath:nomad` 2; 3 to 53 ms each |
 | The page | Draws the chips with counts, the list with pictures and names, grouping by playthrough and the details. Found and fixed: game versions sorted 2.5 below 2.11 |
+
+### S2a on a scratch copy, outside VS Code
+
+Run on 2026-11-03 with a scratch script bundling `src/library.ts`, `src/move.ts`, `src/index.ts` and `src/search.ts`, on a copy of the 60 test saves in a scratch folder (never the real save folder, nor the owner's test folder):
+
+| Check | Result |
+|---|---|
+| `where:game gender:male` (13 saves), all moved to a new loadout | By rename, 28 ms; found by the index in the loadout with their records whole, none left in the game |
+| 5 saves to a library on E: | Copied, each `sav.dat` checked by size, 46 ms; their sources gone; undo copied them back |
+| A move cut short (journal "running" with 3 saves left) | Finished at the next start |
+| Every save accounted for | 60 of 60 |
 
 ## Hand tests
 
@@ -96,3 +111,23 @@ REDsave 0.0.5, installed from `redsave-0.0.5.vsix` over 0.0.4.
 4. Click `lifepath:corpo lifepath:nomad` in the last line: the box says both, and the list shows Corpo and Nomad saves. Click **Hide help**.
 
 Checked in headless Chrome on 2026-11-03: clicking `level:>40` filled the box and gave 828 of 970.
+
+### S2a Library and Move
+
+REDsave 0.0.6, on the **test copy** only: 60 of your saves (1 point of no return, 5 quick saves, 5 autosaves, 49 manual saves, from three playthroughs) that Claude copied into `C:\Users\VYRAL\Saved Games\REDsave-test\saves` on 2026-11-03. Your real save folder is not touched.
+
+Before step 1: install `redsave-0.0.6.vsix` over 0.0.5, then in VS Code's settings set **REDsave: Saves Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\saves` and **REDsave: Library Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\library`.
+
+1. Open REDsave in the activity bar. **Open the Saves page** says 60 saves. **In the game** says "60 · not in a loadout yet"; open it: Manual saves 49, Quick saves 5, Autosaves 5, Point of no return 1, and Playthroughs (3). **Loadouts** says "none yet: + makes one".
+2. Click the **+** on **Loadouts** and type `Corpo male V`. It appears under Loadouts with 0, and its tab opens: "No saves in this loadout yet". Right-click it, **Open Its Folder**: an empty folder in `REDsave-test\library\loadouts`.
+3. In its tab, click **Add saves...**. The tab says "Add saves to Corpo male V" and lists the 60 saves. Click **Male** under V's body (13), then **Select all**. The button says **Add 13 to Corpo male V**: click it. A question asks "Move 13 saves to Corpo male V?", with "13 from the game's folder" below it: press **Move**.
+4. A notice says "Moved 13 saves to Corpo male V". The tab shows its 13 saves, with "13 saves" and their size at the top. In the side bar, Corpo male V says 13 and In the game 47. The loadout's folder in Explorer now has 13 `ManualSave-...` folders, and the test saves folder 13 fewer.
+5. Open the **Saves page**. A **Where** chip row shows In the game 47 and Corpo male V 13, and each save says where it is, in cyan. Type `where:game lifepath:streetkid` (12 saves), press **Select all**, then **Move to loadout...**, choose **New loadout...** and name it `Street Kid run`. Press **Move**. Street Kid run appears in the side bar with 12.
+6. Right-click **Loadouts** and choose **Undo the Last Move**. The question says "Undo: Move 12 saves to Street Kid run?": press **Undo**. The 12 are back in the game (In the game 47, Street Kid run 0). Undo the Last Move again: "There is no move to undo."
+7. Click **Corpo male V**. In its tab, select two saves, click **Move to...** and choose **In the game**, then **Move**. Corpo male V has 11.
+8. Right-click Corpo male V: **Rename...** to `Male V tests`, then **Notes...** with `testing the jacket`. The tab's header shows both, and the side bar's tooltip shows the notes.
+9. Right-click **Street Kid run** (empty), **Remove...**, **Remove**: it goes, and so does its folder. Right-click **Male V tests**, **Remove...**: it says it has 11 saves and offers **Move all to...**. Choose In the game, then **Move**. Remove it again: now it goes. In the game has 60 again.
+10. Optional, with the game (it needs about 12 to 16 GB of RAM): make a loadout `Game check` and move one save into it. Start Cyberpunk 2077 and leave it at the main menu. In the Saves page, try **Move to loadout...** on a save in the game: REDsave says the game is running and moves nothing. In Game check's tab, move its save to another loadout: that works with the game running. Quit the game, then move the save back into the game.
+11. Clear both settings. REDsave shows your real saves again, and Loadouts is empty (the real library has none yet). The test folder `REDsave-test` stays; delete it by hand when we are done with S2.
+
+After the test, tell Claude which steps passed, and anything that looked wrong, slow or unclear.
