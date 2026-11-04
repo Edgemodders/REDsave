@@ -20,6 +20,7 @@ Last updated 2026-11-03.
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
+| [S3a Title spike](#s3a-title-spike) | By hand, in the game | S3a | | To run (REDsave 0.0.11) |
 | [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | 2026-11-03 | Pass, 3 steps |
 | [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Pass: part A (steps 0 to 7) and part B (Steam Cloud quiet, a renumbered save loads) |
 | [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
@@ -28,7 +29,7 @@ Last updated 2026-11-03.
 
 | Build | Test |
 |---|---|
-| None | |
+| REDsave 0.0.11 (S3a Title spike) | [S3a Title spike](#s3a-title-spike) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -49,6 +50,7 @@ npm test
 | `test/search.test.ts` | Parsing the box, words (any case and accents), chips (one key any value, two keys both, minus), playthrough numbers, ranges, dates, quests, facts, chip counts, sort, titles without names, game versions newest first, turning chips on and off |
 | `test/index.test.ts` | The index's cache: each save read once, read again when changed, dropped when removed |
 | `test/swap.test.ts` | Empty save folders as free names, a swap without renaming the names that leave and its undo (the game's own files left alone, the loadout in the game set and put back), a swap that stops partway (the loadout in the game unchanged), a swap cut short finished at the next start |
+| `test/titlespike.test.ts` | One metadata field changed with every other byte kept (LF, no final newline, `60.0`, escaped quotes), the two copies made beside the original with the next free numbers and the original untouched, a plain-text title shown by REDsave |
 | `test/move.test.ts` | The library (make, rename, notes, remove only when empty), nested folders kept apart, the next free number, plans (saves already there, taken names), a move by rename (every file, the files' times, the journal on disk), a move by copy (checked, times kept, the source removed after), no move while the game runs (but between loadouts), none when a save has gone, never overwriting, a move cut short finished, undo (old names first, new numbers for names taken since, no undo of an undo) |
 
 The tests use made-up metadata (`test/fixture.ts`), never a player's saves.
@@ -203,3 +205,15 @@ Asked for by the owner on 2026-11-03: a play button at the top of REDsave's side
 3. With the game running, press it again: "Cyberpunk 2077 is already running." Quit the game.
 
 **Result, 2026-11-03:** all 3 steps passed.
+
+### S3a Title spike
+
+REDsave 0.0.11, in the game, on your real save folder (both path settings empty). The spike adds two new saves, copies of one you pick, and changes nothing else; afterwards they go into a loadout.
+
+1. Install `redsave-0.0.11.vsix` over 0.0.10. With the game closed, press **Ctrl+Shift+P** and run **REDsave: Title Spike: Make Test Copies**. Pick a save you know (the newest is first), and press **Make the copies**. A notice names copy A and copy B (two new `ManualSave-` folders).
+2. On the Saves page the copies are beside the original, with the same picture, date and time. Copy A's title in REDsave is "<its quest>: REDsave test A"; copy B's is the original's.
+3. Start the game (**Run Game**) and open **Load Game**. Find the original and the two copies (the same picture, date and time). Note what title copy A shows, what copy B shows, and whether either is missing or marked as damaged.
+4. Load **copy A**: note whether it loads and plays. Go back to the main menu and load **copy B**: the same. Quit the game.
+5. In VS Code, run **REDsave: Title Spike: Put the Test Copies Away** and press **Move**: the two copies go into a loadout, Title spike. Remove it later, or keep it.
+
+After the run, tell Claude what copies A and B showed in Load Game, and whether they loaded.

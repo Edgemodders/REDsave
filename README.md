@@ -19,7 +19,7 @@ A save game manager for Cyberpunk 2077, as a VS Code extension. Hundreds of save
 **[Docs](https://edgemodders.github.io/REDsave/)** &middot; [Design](docs/design.md) &middot; [Changelog](CHANGELOG.md) &middot; [Tests](docs/testing.md)
 
 > [!NOTE]
-> **Status: S2 Loadouts done, not released yet.** REDsave 0.0.10 (2026-11-03) finds saves (S1, which passed its hand test on 2026-11-03) and keeps loadouts: sets of saves outside the game's folder, each in its own tab, with saves moved in and out safely (a journal, undo, never while the game runs); both passed their hand tests on 2026-11-03. S2b swaps a whole loadout into the game (passed its hand test on 2026-11-03: Steam Cloud showed no errors, and a renumbered save loads). A **Run Game** button starts the game. Next is S3, titles of your own. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
+> **Status: S2 Loadouts done, not released yet.** REDsave 0.0.11 (2026-11-03) finds saves (S1, which passed its hand test on 2026-11-03) and keeps loadouts: sets of saves outside the game's folder, each in its own tab, with saves moved in and out safely (a journal, undo, never while the game runs); both passed their hand tests on 2026-11-03. S2b swaps a whole loadout into the game (passed its hand test on 2026-11-03: Steam Cloud showed no errors, and a renumbered save loads). A **Run Game** button starts the game. Next is S3, titles of your own. The plan and its phases, S0 to S4, are in [docs/design.md](docs/design.md).
 
 ## Repo layout
 

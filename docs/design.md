@@ -285,6 +285,30 @@ Whether the **game's** load menu can show it is open. S3a is a spike to find out
 
 The load list is drawn by `LoadListItem` (`SetMetadata`), the save menu by `SaveGameMenuGameController`, as an earlier experiment in `../SaveTags` (redscript with Codeware, January 2026) shows. That folder's origin and licence are unknown (it calls a `NamedSavesEnv` it does not define, perhaps from another mod): read it only as a hint of where to look, and ask the owner before reusing any of it.
 
+### S3a: the spike, built
+
+REDsave 0.0.11, built on 2026-11-03, awaiting the owner's run in the game ([Tests](testing.html), "S3a Title spike").
+
+What the game's scripts say (read from the decompiled scripts beside the repos, `UI/fullscreen/pregame/loadGameMenu.swift`, not copied): Load Game fills each row in `LoadListItem.SetMetadata` from a `SaveMetadataInfo`, and its title is `SetText(m_label, metadata.trackedQuest)`. Ink resolves a LocKey given to `SetText`, so the quest's name shows in the game's language; plain text should show as written (unverified). `SaveMetadataInfo` is a native class with `trackedQuest`, `locationName`, `internalName` and the rest, but no `userName`. Unknown until the run: whether the game fills it from `metadata.9.json` or from `sav.dat`, and whether a save with a changed metadata file still loads.
+
+| Part | What |
+|---|---|
+| `src/titlespike.ts` | `setField` changes one string field's value in the metadata's text and leaves every other byte (the game writes LF, no final newline, numbers such as `60.0`); `makeSpikeCopies` copies a save twice beside it, with the next free numbers: **A** with `trackedQuest` as plain text, "<quest name>: REDsave test A"; **B** with `userName` as "REDsave test B" |
+| Commands | **REDsave: Title Spike: Make Test Copies** (a pick of the 15 newest saves in the game, a question, the copies; refused while the game runs) and **REDsave: Title Spike: Put the Test Copies Away** (a move into a loadout, Title spike; nothing deleted) |
+| `src/search.ts` | A `trackedQuest` that is not a LocKey is shown as the save's title in REDsave |
+
+Checked on 2026-11-03: 39 unit tests; the copies made from a scratch copy of a real save differ from it in one line each, parse, and keep `sav.dat` the same.
+
+What the run decides:
+
+| If copy A in Load Game shows | Then |
+|---|---|
+| "<quest>: REDsave test A", and it loads | Way A works: S3b writes titles into `trackedQuest` (the original kept in REDsave, so a title can be taken off again), no script mod needed |
+| The quest name, as the original | The game reads the list from `sav.dat` (or a cache): way B, a small game-side script, or no titles in the game |
+| Nothing, or the copy missing or broken | The game checks the metadata against `sav.dat`: way B |
+
+Copy B tells whether `userName` shows anywhere (the scripts say no).
+
 ## Phases
 
 Each phase ends with a hand test by the owner.
