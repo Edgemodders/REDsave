@@ -235,27 +235,36 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   async function runAndReport(plan: ReturnType<typeof planMove>, label: string, touchesGame: boolean, undoOf?: string): Promise<void> {
+    // Busy only while saves move: the notices after it can stay open as long as the player likes.
     busy = true;
+    let result: Awaited<ReturnType<typeof runMove>>;
     try {
-      const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: label, cancellable: false }, (p) =>
+      result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: label, cancellable: false }, (p) =>
         runMove(plan, library, { label, touchesGame, undoOf, progress: (done, total) => p.report({ message: `${done} of ${total}`, increment: 100 / total }) }),
       );
-      log.appendLine(`${label}: ${result.moved} moved${result.error ? `; stopped: ${result.error}` : ""}`);
-      scan(true);
-      if (result.error) return void vscode.window.showErrorMessage(`REDsave stopped: ${result.error}`, "Undo the last move").then((b) => b && undo());
-      const b = await vscode.window.showInformationMessage(`${undoOf ? "Put back" : "Moved"} ${plural(result.moved, "save")}${undoOf ? "" : ` to ${plan.target.name}`}.`, ...(undoOf ? [] : ["Undo", "Open"]));
-      if (b === "Undo") await undo();
-      if (b === "Open") plan.target.where === "game" ? mainPage.show("where:game") : openLoadout(plan.target.where);
     } catch (err) {
-      void vscode.window.showErrorMessage((err as Error).message);
-    } finally {
       busy = false;
+      return void vscode.window.showErrorMessage((err as Error).message);
     }
+    busy = false;
+    log.appendLine(`${label}: ${result.moved} moved${result.error ? `; stopped: ${result.error}` : ""}`);
+    scan(true);
+    const journal = result.journal.id;
+    if (result.error) {
+      const b = await vscode.window.showErrorMessage(`REDsave stopped: ${result.error}`, "Undo the last move");
+      if (b) await undo(journal);
+      return;
+    }
+    const b = await vscode.window.showInformationMessage(`${undoOf ? "Put back" : "Moved"} ${plural(result.moved, "save")}${undoOf ? "" : ` to ${plan.target.name}`}.`, ...(undoOf ? [] : ["Undo", "Open"]));
+    if (b === "Undo") await undo(journal);
+    if (b === "Open") plan.target.where === "game" ? mainPage.show("where:game") : openLoadout(plan.target.where);
   }
 
-  async function undo(): Promise<void> {
+  /** Undoes the last move; from a notice's Undo (only: that notice's move), only while it is still the last one. */
+  async function undo(only?: string): Promise<void> {
     if (busy) return void vscode.window.showWarningMessage("REDsave is moving saves already. Wait for it to finish.");
     const u = undoPlan(library);
+    if (only && u?.of !== only) return void vscode.window.showInformationMessage("That move cannot be undone from here any more: another move came after it. Undo the Last Move undoes the newest one.");
     if (!u) return void vscode.window.showInformationMessage("There is no move to undo.");
     const ok = await vscode.window.showWarningMessage(`${u.label}?`, { modal: true, detail: `${plural(u.items.length, "save goes", "saves go")} back where ${u.items.length === 1 ? "it was" : "they were"}.` }, "Undo");
     if (ok !== "Undo") return;

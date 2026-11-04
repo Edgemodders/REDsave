@@ -19,14 +19,14 @@ Last updated 2026-11-03.
 | [S1 Find hand test](#s1-find) | By hand, installed .vsix | S1 | 2026-11-03 | Pass, all 14 steps (REDsave 0.0.4) |
 | [Search help examples](#search-help-examples-005) | By hand | S1 | | To run (REDsave 0.0.5) |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
-| [S2a Library and Move hand test](#s2a-library-and-move) | By hand, on the test copy | S2a | | To run (REDsave 0.0.6) |
+| [S2a Library and Move hand test](#s2a-library-and-move) | By hand, on the test copy | S2a | 2026-11-03 | 0.0.6 stopped at step 5 (fixed in 0.0.7); steps 5 to 11 to run on 0.0.7 |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
 | REDsave 0.0.5 (clickable help examples) | [Search help examples](#search-help-examples-005) |
-| REDsave 0.0.6 (S2a Library and Move) | [S2a Library and Move](#s2a-library-and-move) |
+| REDsave 0.0.7 (S2a Library and Move) | [S2a Library and Move](#s2a-library-and-move), from step 5 |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -131,3 +131,5 @@ Before step 1: install `redsave-0.0.6.vsix` over 0.0.5, then in VS Code's settin
 11. Clear both settings. REDsave shows your real saves again, and Loadouts is empty (the real library has none yet). The test folder `REDsave-test` stays; delete it by hand when we are done with S2.
 
 After the test, tell Claude which steps passed, and anything that looked wrong, slow or unclear.
+
+**First run, 2026-11-03, REDsave 0.0.6:** steps 1 to 4 passed. At step 5, **Move to loadout...** only said "REDsave is moving saves already": REDsave stayed busy until step 4's notice (with its Undo and Open buttons) was closed. REDsave 0.0.7 ends the busy state as soon as the saves have moved, and a notice's **Undo** undoes only its own move (if a newer move came after, it says so instead of undoing the newer one). The retest goes on from step 5 on 0.0.7, with the library as step 4 left it.
