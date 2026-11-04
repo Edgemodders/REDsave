@@ -217,7 +217,7 @@ The game's folder has `steam_autocloud.vdf`. Before the first swap or move out o
 
 #### S2a: built
 
-REDsave 0.0.6, built on 2026-11-03; 0.0.7 fixes what its first hand test found at step 5 (see Tests). Awaiting the rest of the owner's hand test ([Tests](testing.html), "S2a Library and Move"), on the test copy of 60 saves in `C:\Users\VYRAL\Saved Games\REDsave-test\saves`.
+REDsave 0.0.6, built on 2026-11-03; 0.0.7 fixes what its first hand test found at step 5, 0.0.8 what its second found (see Tests). **Passed the owner's hand test on 2026-11-03** ([Tests](testing.html), "S2a Library and Move"), on the test copy of 60 saves in `C:\Users\VYRAL\Saved Games\REDsave-test\saves`.
 
 | File | What it does |
 |---|---|

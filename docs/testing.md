@@ -19,13 +19,13 @@ Last updated 2026-11-03.
 | [S1 Find hand test](#s1-find) | By hand, installed .vsix | S1 | 2026-11-03 | Pass, all 14 steps (REDsave 0.0.4) |
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
-| [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Steps passed on 0.0.7 (0.0.6 stopped at step 5); found: an undo into a removed loadout left its saves unlisted (fixed in 0.0.8, to check) |
+| [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.8 (a removed loadout listed again) | [S2a Library and Move](#s2a-library-and-move), "Second run" |
+| None | |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -142,3 +142,5 @@ Check for 0.0.8, on the library as the second run left it:
 1. Install `redsave-0.0.8.vsix` over 0.0.7. A notice says REDsave found Street Kid (22 saves) again, and **Street Kid** is under Loadouts with 22, its notes saying it was listed again.
 2. Open **Street Kid** and **Corpo Male V Saves**: 22 and 53 saves.
 3. To put your real saves back where they were: in each of the two loadouts' tabs, press **Select all**, then **Move to...** > **In the game** > **Move** (with the game closed). In the game has every save again, and REDsave's library is empty. Then remove the two empty loadouts.
+
+**Result, 2026-11-03, REDsave 0.0.8:** steps 1 and 2 passed: Street Kid came back with its 22 saves. Step 3 was skipped by choice: the owner keeps both loadouts (Street Kid, 22 saves; Corpo Male V Saves, 53) with their real saves in REDsave's library for now. **S2a is done.**
