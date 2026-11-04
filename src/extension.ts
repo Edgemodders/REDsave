@@ -1,8 +1,11 @@
 // REDsave's extension. S1, Find: the index of every save, the Saves page and the side bar's counts.
 // S2a, Library and Move: loadouts as children of the side bar's Loadouts node, a tab per loadout
 // with Add saves..., and moving a selection of saves between the game's folder and the loadouts
-// (move.ts: the checks, the journal, undo). Swapping a whole loadout in is S2b (docs/design.md).
+// (move.ts: the checks, the journal, undo). S2b, Swap: Swap In puts a whole loadout in the game
+// (the game's saves go to the loadout they belong to first); the loadout in the game owns the saves
+// in the game's folder, including the ones the game writes while it is in.
 import * as vscode from "vscode";
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { defaultSavesPath, KIND_NAMES, SaveKind } from "./saves";
 import { SaveIndex } from "./index";
@@ -11,7 +14,7 @@ import { findGame } from "./game";
 import { SavesPage } from "./page";
 import { playthroughLabel, playthroughsOf } from "./search";
 import { defaultLibraryPath, Library, within } from "./library";
-import { Place, planMove, recover, runMove, undoPlan } from "./move";
+import { Place, planMove, planSwap, recover, runMove, undoPlan } from "./move";
 import type { SaveRecord } from "./metadata";
 
 const KIND_WORDS: Record<SaveKind, string> = { manual: "manual", auto: "auto", quick: "quick", pointOfNoReturn: "ponr", endGame: "endgame" };
@@ -43,9 +46,16 @@ function placesProblem(): string | undefined {
   return undefined;
 }
 
-const placeName = (where: string) => (where === "game" ? "the game" : library.loadout(where)?.name ?? where);
-const placeOf = (where: string): Place => ({ where, dir: where === "game" ? savesPath() : library.dirOf(where), name: placeName(where) });
-const countIn = (where: string) => records.filter((r) => r.where === where).length;
+/** Whether a save belongs to a loadout: in its folder, or in the game's folder while it is the loadout in the game. */
+const belongs = (r: SaveRecord, id: string) => r.where === id || (r.where === "game" && library.inGame === id);
+const inGameName = () => (library.inGame ? library.loadout(library.inGame)?.name : undefined);
+const placeName = (where: string) => (where === "game" ? (inGameName() ? `the game (${inGameName()})` : "the game") : library.loadout(where)?.name ?? where);
+/** Where a move to a place goes: the loadout in the game is the game's folder. */
+const placeOf = (where: string): Place => {
+  const game = where === "game" || where === library.inGame;
+  return { where: game ? "game" : where, dir: game ? savesPath() : library.dirOf(where), name: placeName(where) };
+};
+const countIn = (where: string) => (where === "game" ? records.filter((r) => r.where === "game").length : records.filter((r) => belongs(r, where)).length);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 class LoadoutItem extends vscode.TreeItem {
@@ -88,7 +98,7 @@ class SavesView implements vscode.TreeDataProvider<vscode.TreeItem> {
         item.description = library.inGame === l.id ? `${n} · in the game` : String(n);
         item.tooltip = new vscode.MarkdownString(`**${l.name}**: ${plural(n, "save")}${l.notes ? `\n\n${l.notes}` : ""}`);
         item.iconPath = new vscode.ThemeIcon(library.inGame === l.id ? "circle-filled" : "save-all");
-        item.contextValue = "redsave.loadout";
+        item.contextValue = library.inGame === l.id ? "redsave.loadout.ingame" : "redsave.loadout";
         item.command = { command: "redsave.openLoadout", title: "Open", arguments: [l.id] };
         return item;
       });
@@ -147,14 +157,40 @@ export function activate(context: vscode.ExtensionContext): void {
     libraryDir: library.root,
     scan: scanInfo,
     places: Object.fromEntries(library.loadouts.map((l) => [l.id, l.name])),
+    inGame: library.inGame,
     loadout: (id: string) => {
       const l = library.loadout(id);
       if (!l) return undefined;
-      const mine = records.filter((r) => r.where === id);
-      return { name: l.name, notes: l.notes, count: mine.length, bytes: mine.reduce((n, r) => n + (r.fileSize ?? 0), 0) };
+      const mine = records.filter((r) => belongs(r, id));
+      return { name: l.name, notes: l.notes, count: mine.length, bytes: mine.reduce((n, r) => n + (r.fileSize ?? 0), 0), inGame: library.inGame === id };
     },
   });
-  const actions = { openFolder, move: (dirs: string[], target: string | undefined, query: string) => void moveSaves(dirs, target, query) };
+  const actions = {
+    openFolder,
+    move: (dirs: string[], target: string | undefined, query: string) => void moveSaves(dirs, target, query),
+    swap: (id: string) => void swapIn(id),
+  };
+
+  /**
+   * Before saves first leave the game's folder on a PC where Steam Cloud syncs it: says once what
+   * that means. False when the player cancels.
+   */
+  async function steamOk(): Promise<boolean> {
+    if (context.globalState.get<boolean>("redsave.steamCloudExplained")) return true;
+    if (!fs.existsSync(path.join(savesPath(), "steam_autocloud.vdf"))) return true;
+    const b = await vscode.window.showWarningMessage(
+      "Steam Cloud syncs the game's save folder",
+      {
+        modal: true,
+        detail:
+          "Saves REDsave moves out of the game's folder are kept in REDsave's library on this PC: they are safe there. Steam Cloud copies the game's folder, so its cloud copy follows what is in that folder: saves moved out may leave Steam's cloud too, and go back to it when they are moved in. What Steam does exactly is not checked yet. REDsave says this once.",
+      },
+      "Continue",
+    );
+    if (b !== "Continue") return false;
+    await context.globalState.update("redsave.steamCloudExplained", true);
+    return true;
+  }
   const mainPage = new SavesPage(context.extensionUri, undefined, pageData, actions);
   const tabs = new Map<string, SavesPage>();
   const allPages = () => [mainPage, ...tabs.values()];
@@ -209,10 +245,12 @@ export function activate(context: vscode.ExtensionContext): void {
     if (!chosen.length) return;
     if (!target) {
       const sources = new Set(chosen.map((r) => r.where));
+      const inName = inGameName();
       const picks: (vscode.QuickPickItem & { where?: string; make?: boolean })[] = [
         { label: "$(add) New loadout...", description: "made from these saves", make: true },
-        { label: "$(game) In the game", description: `${countIn("game")} saves · the game's save folder`, where: "game" },
-        ...library.loadouts.map((l) => ({ label: `$(save-all) ${l.name}`, description: plural(countIn(l.id), "save"), where: l.id })),
+        { label: "$(game) In the game", description: `${countIn("game")} saves · the game's save folder${inName ? `, ${inName}` : ""}`, where: "game" },
+        // the loadout in the game is the game's folder: listed once, as In the game
+        ...library.loadouts.filter((l) => l.id !== library.inGame).map((l) => ({ label: `$(save-all) ${l.name}`, description: plural(countIn(l.id), "save"), where: l.id })),
       ].filter((p) => p.make || !(sources.size === 1 && sources.has(p.where!)));
       const pick = await vscode.window.showQuickPick(picks, { title: `Move ${plural(chosen.length, "save")} to...`, placeHolder: "A loadout, or the game's save folder" });
       if (!pick) return;
@@ -237,17 +275,18 @@ export function activate(context: vscode.ExtensionContext): void {
     ].filter(Boolean).join("\n");
     const ok = await vscode.window.showWarningMessage(`Move ${plural(plan.items.length, "save")} to ${place.name}?`, { modal: true, detail }, "Move");
     if (ok !== "Move") return;
-    const touchesGame = target === "game" || plan.items.some((i) => i.source === "game");
+    if (plan.items.some((i) => i.source === "game") && !(await steamOk())) return;
+    const touchesGame = place.where === "game" || plan.items.some((i) => i.source === "game");
     await runAndReport(plan, `Move ${plural(plan.items.length, "save")} to ${place.name}`, touchesGame);
   }
 
-  async function runAndReport(plan: ReturnType<typeof planMove>, label: string, touchesGame: boolean, undoOf?: string): Promise<void> {
+  async function runAndReport(plan: ReturnType<typeof planMove>, label: string, touchesGame: boolean, undoOf?: string, inGame?: { before: string | null; after: string | null }, doneText?: string): Promise<void> {
     // Busy only while saves move: the notices after it can stay open as long as the player likes.
     busy = true;
     let result: Awaited<ReturnType<typeof runMove>>;
     try {
       result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: label, cancellable: false }, (p) =>
-        runMove(plan, library, { label, touchesGame, undoOf, progress: (done, total) => p.report({ message: `${done} of ${total}`, increment: 100 / total }) }),
+        runMove(plan, library, { label, touchesGame, undoOf, inGame, progress: (done, total) => p.report({ message: `${done} of ${total}`, increment: 100 / total }) }),
       );
     } catch (err) {
       busy = false;
@@ -264,7 +303,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (b) await undo(journal);
       return;
     }
-    const b = await vscode.window.showInformationMessage(`${undoOf ? "Put back" : "Moved"} ${plural(result.moved, "save")}${undoOf ? "" : ` to ${plan.target.name}`}.`, ...(undoOf ? [] : ["Undo", "Open"]));
+    const b = await vscode.window.showInformationMessage(doneText ?? `${undoOf ? "Put back" : "Moved"} ${plural(result.moved, "save")}${undoOf ? "" : ` to ${plan.target.name}`}.`, ...(undoOf ? [] : ["Undo", "Open"]));
     if (b === "Undo") await undo(journal);
     if (b === "Open") plan.target.where === "game" ? mainPage.show("where:game") : openLoadout(plan.target.where);
   }
@@ -279,7 +318,61 @@ export function activate(context: vscode.ExtensionContext): void {
     if (ok !== "Undo") return;
     const saves = savesPath();
     const touchesGame = u.items.some((i) => within(i.from, saves) || within(i.to, saves));
-    await runAndReport({ target: { where: "", dir: "", name: "where they were" }, items: u.items, already: 0 }, u.label, touchesGame, u.of);
+    await runAndReport({ target: { where: "", dir: "", name: "where they were" }, items: u.items, already: 0 }, u.label, touchesGame, u.of, u.inGame);
+  }
+
+  /**
+   * Swap In: the game's saves go to the loadout they belong to (asked for first when they belong
+   * to none), then the loadout's saves come into the game's folder. One move, one undo.
+   */
+  async function swapIn(id: string): Promise<void> {
+    if (busy) return void vscode.window.showWarningMessage("REDsave is moving saves already. Wait for it to finish.");
+    const problem = placesProblem();
+    if (problem) return void vscode.window.showErrorMessage(problem);
+    const l = library.loadout(id);
+    if (!l) return;
+    if (library.inGame === id) return void vscode.window.showInformationMessage(`${l.name} is in the game already.`);
+    const gameSaves = records.filter((r) => r.where === "game");
+    const incoming = records.filter((r) => r.where === id);
+    let outId = library.inGame;
+    let outName = outId ? library.loadout(outId)?.name : undefined;
+    if (!outId && gameSaves.length) {
+      const today = new Date().toISOString().slice(0, 10);
+      outName = await vscode.window.showInputBox({
+        title: `Swap in ${l.name}`,
+        prompt: `First, a loadout for the ${plural(gameSaves.length, "save")} in the game now: they move there, and come back when you swap it in.`,
+        value: `Saved on ${today}`,
+        validateInput: (v) => (!v.trim() ? "A loadout needs a name" : library.loadouts.some((x) => x.name.toLowerCase() === v.trim().toLowerCase()) ? "There is a loadout with that name already" : undefined),
+      });
+      if (!outName) return;
+    }
+    const game: Place = { where: "game", dir: savesPath(), name: "the game" };
+    // A plan before the new loadout exists, for the question; made again once it does.
+    const probe = planSwap(outId ? gameSaves.map((r) => ({ dir: r.dir, where: r.where })) : [], { where: outId ?? "", dir: outId ? library.dirOf(outId) : "", name: outName ?? "" }, incoming.map((r) => ({ dir: r.dir, where: r.where })), game);
+    const renamed = probe.items.filter((i) => i.source === id && i.renamed).length;
+    const detail = [
+      gameSaves.length ? `The ${plural(gameSaves.length, "save")} in the game go to ${outName}.` : "The game's folder has no saves to move out.",
+      incoming.length ? `${l.name}'s ${plural(incoming.length, "save")} come into the game's folder.` : `${l.name} has no saves yet: the game starts with none, and the saves you make go to ${l.name}.`,
+      renamed ? `${plural(renamed, "save gets", "saves get")} a new folder number, since ${renamed === 1 ? "its name is" : "their names are"} taken in the game's folder.` : "",
+      "Nothing is deleted, and Undo the Last Move swaps back.",
+    ].filter(Boolean).join("\n");
+    const ok = await vscode.window.showWarningMessage(`Swap in ${l.name}?`, { modal: true, detail }, "Swap in");
+    if (ok !== "Swap in") return;
+    if (gameSaves.length && !(await steamOk())) return;
+    if (!outId && gameSaves.length) {
+      outId = library.create(outName!).id;
+      log.appendLine(`New loadout ${outName} for the saves in the game, in ${library.dirOf(outId)}`);
+    }
+    const plan = planSwap(gameSaves.map((r) => ({ dir: r.dir, where: r.where })), { where: outId ?? "", dir: outId ? library.dirOf(outId) : "", name: outName ?? "" }, incoming.map((r) => ({ dir: r.dir, where: r.where })), game);
+    const before = library.inGame;
+    if (!plan.items.length) {
+      // nothing to move either way: only which loadout is in the game changes
+      library.setInGame(id);
+      scan();
+      return void vscode.window.showInformationMessage(`${l.name} is in the game now. The saves you make go to it.`);
+    }
+    const out = plan.items.filter((i) => i.source === "game").length;
+    await runAndReport(plan, `Swap in ${l.name}`, true, undefined, { before, after: id }, `Swapped in ${l.name}: ${plural(plan.items.length - out, "save")} in the game${out ? `, ${out} moved to ${outName}` : ""}.`);
   }
 
   async function newLoadout(suggested?: string): Promise<string | undefined> {
@@ -340,7 +433,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const n = countIn(l.id);
       if (n) {
         const b = await vscode.window.showWarningMessage(`${l.name} has ${plural(n, "save")}. A loadout is removed only when it is empty.`, { modal: true, detail: "Move its saves to the game or another loadout first. Nothing is deleted." }, "Move all to...");
-        if (b === "Move all to...") await moveSaves(records.filter((r) => r.where === l.id).map((r) => r.dir), undefined, "");
+        if (b === "Move all to...") await moveSaves(records.filter((r) => belongs(r, l.id)).map((r) => r.dir), undefined, "");
         return;
       }
       const ok = await vscode.window.showWarningMessage(`Remove the empty loadout ${l.name}?`, { modal: true }, "Remove");
@@ -354,6 +447,10 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.commands.registerCommand("redsave.undoMove", () => undo()),
+    vscode.commands.registerCommand("redsave.swapIn", (arg: unknown) => {
+      const id = idOf(arg);
+      if (id) void swapIn(id);
+    }),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("redsave.libraryPath")) {
         library = new Library(libraryPath());

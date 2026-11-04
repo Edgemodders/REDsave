@@ -17,14 +17,18 @@ export interface PageData {
   scan: { count: number; read: number; ms: number };
   /** Loadout id to name. */
   places: Record<string, string>;
+  /** The loadout in the game: it owns the saves in the game's folder. */
+  inGame: string | null;
   /** A loadout by its id: for its tab's header. */
-  loadout: (id: string) => { name: string; notes: string; count: number; bytes: number } | undefined;
+  loadout: (id: string) => { name: string; notes: string; count: number; bytes: number; inGame: boolean } | undefined;
 }
 
 export interface PageActions {
   openFolder: () => void;
   /** The player pressed Move to loadout..., Move to... or Add to <loadout>. */
   move: (dirs: string[], target: string | undefined, query: string) => void;
+  /** The player pressed Swap in on a loadout's tab. */
+  swap: (id: string) => void;
 }
 
 /** What a page sends back. */
@@ -33,7 +37,8 @@ type FromPage =
   | { type: "reveal"; dirs: string[] }
   | { type: "openFolder" }
   | { type: "copy"; text: string }
-  | { type: "move"; dirs: string[]; target?: string; query: string };
+  | { type: "move"; dirs: string[]; target?: string; query: string }
+  | { type: "swap" };
 
 export class SavesPage {
   private panel?: vscode.WebviewPanel;
@@ -112,6 +117,7 @@ export class SavesPage {
       scan: d.scan,
       scope: this.scope,
       places: d.places,
+      inGame: d.inGame,
       loadout: this.scope ? d.loadout(this.scope) : undefined,
     };
   }
@@ -147,6 +153,9 @@ export class SavesPage {
         break;
       case "move":
         this.actions.move(m.dirs, m.target, m.query);
+        break;
+      case "swap":
+        if (this.scope) this.actions.swap(this.scope);
         break;
     }
   }

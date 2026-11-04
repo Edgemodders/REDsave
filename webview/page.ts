@@ -56,7 +56,9 @@ let savesDir = "";
 /** Set on a loadout's tab: its id. */
 let scope: string | undefined;
 let places: Places = {};
-let loadout: { name: string; notes: string; count: number; bytes: number } | undefined;
+let loadout: { name: string; notes: string; count: number; bytes: number; inGame: boolean } | undefined;
+/** The loadout in the game: it owns the saves in the game's folder. */
+let inGame: string | null = null;
 /** On a loadout's tab: picking saves to add (every save elsewhere shows), rather than its own. */
 let picking = false;
 let scanInfo = { count: 0, read: 0, ms: 0 };
@@ -239,7 +241,8 @@ ${r.problem ? `<p class="warn">${esc(r.problem)}</p>` : ""}
 /** The saves this tab works on: all of them; a loadout's own; or, when adding, every save elsewhere. */
 function base(): PageRecord[] {
   if (!scope) return records;
-  return records.filter((r) => (picking ? r.where !== scope : r.where === scope));
+  const mine = (r: PageRecord) => r.where === scope || (r.where === "game" && inGame === scope);
+  return records.filter((r) => (picking ? !mine(r) : mine(r)));
 }
 let manyPlaces = false;
 
@@ -250,7 +253,10 @@ function loadoutHtml(): string {
     return `<div class="lbar"><h1>Add saves to ${esc(loadout.name)}</h1><button id="doneAdding" class="link">Back to ${esc(loadout.name)}</button></div>
 <p class="dim">Every save in the game and in the other loadouts. Search or filter, select, then <b>Add to ${esc(loadout.name)}</b>: they move into this loadout.</p>`;
   }
-  return `<div class="lbar"><h1>${esc(loadout.name)}</h1><span class="dim">${loadout.count} saves · ${gb(loadout.bytes)}</span><button id="addSaves" class="act">Add saves...</button></div>${notes}`;
+  const state = loadout.inGame
+    ? `<span class="ingame" title="Its saves are in the game's save folder, and the saves you make go to it">In the game</span>`
+    : `<button id="swapIn" class="act" title="The game's saves go to the loadout they belong to, and this loadout's saves come in">Swap in</button>`;
+  return `<div class="lbar"><h1>${esc(loadout.name)}</h1><span class="dim">${loadout.count} saves · ${gb(loadout.bytes)}</span>${state}<button id="addSaves" class="act">Add saves...</button></div>${notes}`;
 }
 
 function tally(): void {
@@ -389,6 +395,7 @@ $("loadout").addEventListener("click", (e) => {
   const id = (e.target as HTMLElement).id;
   if (id === "addSaves") setPicking(true);
   if (id === "doneAdding") setPicking(false);
+  if (id === "swapIn") vscode.postMessage({ type: "swap" });
 });
 
 $("details").addEventListener("click", (e) => {
@@ -423,6 +430,7 @@ window.addEventListener("message", (e) => {
     scanInfo = m.scan;
     scope = m.scope;
     places = m.places ?? {};
+    inGame = m.inGame ?? null;
     loadout = m.loadout;
     // after a move, the moved saves are no longer on this tab: the selection drops them in draw()
     if (m.moved && picking) picking = false;

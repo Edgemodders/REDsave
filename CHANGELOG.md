@@ -26,3 +26,7 @@ How to keep it (the Edgemodders convention):
 - Move a selection to a loadout or back into the game from the Saves page (**Move to loadout...**) or a loadout's tab (**Move to...**). REDsave asks once, with how many saves come from where, before anything moves.
 - Moves are safe: never while the game runs (moves between loadouts excepted), nothing deleted, every move written down first and finished at the next start if VS Code closes partway, and **Undo the Last Move** puts the saves back. A save whose folder name is taken where it goes gets the next free number.
 - A **Where** chip on the Saves page: the game's folder and each loadout, with counts.
+- **Swap In** a loadout (its menu in the side bar, or its tab): the game's saves go to the loadout they belong to (REDsave asks for a name the first time), and the loadout's saves come into the game. One question first, and **Undo the Last Move** swaps back.
+- The loadout in the game is marked in the side bar and on its tab, and the saves you make while it is in belong to it.
+- Before saves first leave the game's folder on a PC where Steam Cloud syncs it, REDsave explains once what that means.
+- Empty save folders the game leaves behind no longer make REDsave give an incoming save a new folder number.

@@ -193,7 +193,7 @@ test("undo puts the last move's saves back, with a new number if their name was 
     s.save(s.game, "ManualSave-1"); // the game saved again under that name
     const u = undoPlan(s.lib)!;
     assert.equal(u.label, "Undo: Move 2 saves to Test");
-    assert.deepEqual(u.items.map((i) => path.basename(i.to)), ["ManualSave-3", "ManualSave-2"]);
+    assert.deepEqual(u.items.map((i) => path.basename(i.to)), ["ManualSave-2", "ManualSave-3"], "back in reverse order: ManualSave-2 keeps its name, ManualSave-1 (taken since) gets 3");
     await runMove({ target: { where: "", dir: "", name: "" }, items: u.items, already: 0 }, s.lib, { label: u.label, touchesGame: true, isGameRunning: closed, undoOf: u.of });
     assert.deepEqual(fs.readdirSync(s.game).sort(), ["ManualSave-1", "ManualSave-2", "ManualSave-3"]);
     assert.deepEqual(fs.readdirSync(s.lib.dirOf(l.id)), []);

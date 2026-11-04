@@ -2,7 +2,7 @@
   "name": "redsave",
   "displayName": "REDsave",
   "description": "Save game manager for Cyberpunk 2077: search and filter your saves, keep sets of them outside the game and swap them in, and give saves your own titles.",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "publisher": "edgemodders",
   "preview": true,
   "pricing": "Free",
@@ -117,6 +117,12 @@
         "title": "Undo the Last Move",
         "category": "REDsave",
         "icon": "$(discard)"
+      },
+      {
+        "command": "redsave.swapIn",
+        "title": "Swap In",
+        "category": "REDsave",
+        "icon": "$(arrow-swap)"
       }
     ],
     "menus": {
@@ -167,6 +173,10 @@
         {
           "command": "redsave.removeLoadout",
           "when": "false"
+        },
+        {
+          "command": "redsave.swapIn",
+          "when": "false"
         }
       ],
       "view/item/context": [
@@ -186,28 +196,38 @@
           "group": "loadouts@2"
         },
         {
-          "command": "redsave.openLoadout",
+          "command": "redsave.swapIn",
           "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "loadout@0"
+        },
+        {
+          "command": "redsave.swapIn",
+          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "group": "inline"
+        },
+        {
+          "command": "redsave.openLoadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave\\.loadout(\\.ingame)?$/",
           "group": "loadout@1"
         },
         {
           "command": "redsave.renameLoadout",
-          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave\\.loadout(\\.ingame)?$/",
           "group": "loadout@2"
         },
         {
           "command": "redsave.loadoutNotes",
-          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave\\.loadout(\\.ingame)?$/",
           "group": "loadout@3"
         },
         {
           "command": "redsave.openLoadoutFolder",
-          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave\\.loadout(\\.ingame)?$/",
           "group": "loadout@4"
         },
         {
           "command": "redsave.removeLoadout",
-          "when": "view == redsave.saves && viewItem == redsave.loadout",
+          "when": "view == redsave.saves && viewItem =~ /^redsave\\.loadout(\\.ingame)?$/",
           "group": "loadout@9"
         }
       ]

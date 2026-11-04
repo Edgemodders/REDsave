@@ -31,6 +31,8 @@ export interface Journal {
   items: MoveItem[];
   /** Set on a move that undid another: it is not offered for undo itself. */
   undoOf?: string;
+  /** A swap: the loadout in the game before and after. Set on the library when the move completes. */
+  inGame?: { before: string | null; after: string | null };
 }
 
 interface LibraryFile {
@@ -98,6 +100,12 @@ export class Library {
     const tmp = `${this.file}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2));
     fs.renameSync(tmp, this.file);
+  }
+
+  /** Which loadout the game's saves belong to (a swap sets it). */
+  setInGame(id: string | null): void {
+    this.data.inGame = id;
+    this.save();
   }
 
   setJournal(j: Journal | undefined): void {

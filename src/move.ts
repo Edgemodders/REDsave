@@ -51,10 +51,28 @@ export function nextFree(name: string, taken: Set<string>): string {
   return `${prefix}-${max + 1}`;
 }
 
-/** The names in a folder, lower case: save folders and anything else, since a target name must be free of all. */
-function namesIn(dir: string): Set<string> {
+/** Whether a path is a folder with nothing in it (the game leaves empty save folders behind). */
+function emptyFolder(p: string): boolean {
   try {
-    return new Set(fs.readdirSync(dir).map((n) => n.toLowerCase()));
+    return fs.statSync(p).isDirectory() && fs.readdirSync(p).length === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The names in a folder, lower case: save folders and anything else, since a target name must be
+ * free of all. An empty folder does not count: a save may take its name (moveFolder removes it
+ * first), so a swap does not renumber saves because of the empty folders the game left.
+ */
+export function namesIn(dir: string): Set<string> {
+  try {
+    return new Set(
+      fs
+        .readdirSync(dir)
+        .filter((n) => !emptyFolder(path.join(dir, n)))
+        .map((n) => n.toLowerCase()),
+    );
   } catch {
     return new Set();
   }
@@ -112,6 +130,8 @@ export function sameDrive(a: string, b: string): boolean {
 
 /** Moves one save folder. A rename when it can; else a checked copy, then the source removed. */
 export function moveFolder(from: string, to: string, forceCopy = false): void {
+  // An empty folder in the way is taken out (rmdir: only an empty one); anything else stops it.
+  if (emptyFolder(to)) fs.rmdirSync(to);
   if (fs.existsSync(to)) throw new Error(`${to} exists already`);
   fs.mkdirSync(path.dirname(to), { recursive: true });
   if (!forceCopy && sameDrive(from, to)) {
@@ -138,6 +158,8 @@ export interface MoveOptions {
   /** Tests: copy even on the same drive. */
   forceCopy?: boolean;
   undoOf?: string;
+  /** A swap, or the undo of one: the loadout in the game before and after, set when it completes. */
+  inGame?: { before: string | null; after: string | null };
   progress?: (done: number, total: number) => void;
 }
 
@@ -177,6 +199,7 @@ export async function runMove(plan: MovePlan, lib: Library, opts: MoveOptions): 
     state: "running",
     items: plan.items.map((i) => ({ from: i.from, to: i.to, state: "pending" })),
     undoOf: opts.undoOf,
+    inGame: opts.inGame,
   };
   lib.setJournal(journal);
   let moved = 0;
@@ -196,7 +219,8 @@ export async function runMove(plan: MovePlan, lib: Library, opts: MoveOptions): 
     opts.progress?.(moved, journal.items.length);
   }
   journal.state = "complete";
-  lib.save();
+  if (journal.inGame) lib.setInGame(journal.inGame.after);
+  else lib.save();
   return { moved, journal };
 }
 
@@ -231,19 +255,24 @@ export function recover(lib: Library): { finished: number; failed: MoveItem[]; l
     }
   }
   j.state = failed.length ? "stopped" : "complete";
-  lib.save();
+  if (j.state === "complete" && j.inGame) lib.setInGame(j.inGame.after);
+  else lib.save();
   return { finished, failed, label: j.label };
 }
 
 /** The plan that puts the last move's saves back where they came from, or undefined when there is nothing to undo. */
-export function undoPlan(lib: Library): { items: PlanItem[]; label: string; of: string } | undefined {
+export function undoPlan(lib: Library): { items: PlanItem[]; label: string; of: string; inGame?: { before: string | null; after: string | null } } | undefined {
   const j = lib.journal;
   if (!j || j.undoOf || j.state === "running") return undefined;
-  const done = j.items.filter((i) => i.state === "done");
+  // Back in the reverse order: in a swap the saves that came into the game leave it before the ones
+  // that went out return, so a name the game's folder had before is free again when its save comes back.
+  const done = j.items.filter((i) => i.state === "done").reverse();
   if (!done.length) return undefined;
+  // Names held now by saves this undo moves away do not count as taken.
+  const leaving = new Set(done.map((i) => i.to.toLowerCase()));
   const takenIn = new Map<string, Set<string>>();
   const takenOf = (dir: string) => {
-    if (!takenIn.has(dir)) takenIn.set(dir, namesIn(dir));
+    if (!takenIn.has(dir)) takenIn.set(dir, new Set([...namesIn(dir)].filter((n) => !leaving.has(path.join(dir, n).toLowerCase()))));
     return takenIn.get(dir)!;
   };
   // First every save whose old name is still free gets it back; only then do the others get new
@@ -264,5 +293,28 @@ export function undoPlan(lib: Library): { items: PlanItem[]; label: string; of: 
     }
     return { from: i.to, to: path.join(dir, name), source: "", renamed: name !== path.basename(i.from) ? name : undefined };
   });
-  return { items, label: `Undo: ${j.label}`, of: j.id };
+  // undoing a swap also puts back which loadout is in the game
+  const inGame = j.inGame ? { before: j.inGame.after, after: j.inGame.before } : undefined;
+  return { items, label: `Undo: ${j.label}`, of: j.id, inGame };
+}
+
+/**
+ * A swap: the game's saves go out to `out` (the loadout they belong to), then the loadout's saves
+ * come into the game's folder. One plan, so one journal and one undo. The incoming saves' names are
+ * checked against the game's folder as it will be once the outgoing saves have left, so a swap
+ * renumbers only saves whose names are taken by something that stays (another file of the game's).
+ */
+export function planSwap(gameSaves: { dir: string; where: string }[], out: Place, incoming: { dir: string; where: string }[], game: Place): MovePlan {
+  const outPlan = planMove(gameSaves, out);
+  const leaving = new Set(gameSaves.map((s) => path.basename(s.dir).toLowerCase()));
+  const taken = new Set([...namesIn(game.dir)].filter((n) => !leaving.has(n)));
+  const items: PlanItem[] = [...outPlan.items];
+  for (const s of incoming) {
+    const name = path.basename(s.dir);
+    let to = name;
+    if (taken.has(name.toLowerCase())) to = nextFree(name, taken);
+    taken.add(to.toLowerCase());
+    items.push({ from: s.dir, to: path.join(game.dir, to), source: s.where, renamed: to !== name ? to : undefined });
+  }
+  return { target: game, items, already: outPlan.already };
 }
