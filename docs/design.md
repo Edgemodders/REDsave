@@ -166,6 +166,60 @@ Decided with the owner on 2026-11-03: saves are only **moved**, so each save is 
 
 The dev PC's save folder has `steam_autocloud.vdf`: Steam Cloud syncs it. Moving saves out of the folder may make Steam delete them from the cloud too, and moving them back uploads them again. Unverified: what Steam does with a folder changed while Steam runs but the game does not, and whether it asks about a conflict at the next start. S2's test checks it on the dev PC before any release. Until then REDsave says, at the first swap on a PC with Steam Cloud, that the saves are kept in REDsave's library and Steam's cloud copy follows the game's folder. GOG Galaxy's cloud saves are the same question (unverified).
 
+### S2: plan
+
+Proposed on 2026-11-03, to agree with the owner. S2 is the first phase that moves saves, so it is split in two, and S2a is tested on a copy of the save folder before anything touches the real one.
+
+| Part | What | Tested on |
+|---|---|---|
+| **S2a Library and Move** | The library, loadouts in the side bar, the **Where** chip on the Saves page, **Move to loadout...** and **New loadout from selection** for a selection, the journal, undo, the game-running check | A copy of some saves (`redsave.savesPath` and `redsave.libraryPath` pointed at test folders) |
+| **S2b Swap** | **Swap in** a whole loadout, the Steam Cloud explanation, renumbered folders checked in the game | The real save folder, after S2a passes, with a throwaway save for the Steam Cloud check |
+
+#### What the player sees
+
+| Where | What |
+|---|---|
+| Side bar, **Loadouts** view | **In the game**: the saves in the game's folder and the loadout they belong to ("Main playthrough", or "not in a loadout yet"). Below it, each loadout with its number of saves. A loadout's menu: **Swap in** (S2b), **Show on the Saves page**, **Rename**, **Notes**, **Open its folder**, **Remove** (only an empty one) |
+| Saves page | A **Where** chip row: In the game, then each loadout, with counts (`where:game`, `where:"Dogtown run"` in the box). The selection line gets **Move to loadout...** beside Show in folder |
+| Move to loadout... | A pick list of the loadouts, In the game, and **New loadout...** (named from the search by default, such as "Corpo, Takemura alive"). Then one question with the counts: "Move 42 saves to Dogtown run? 38 from the game's folder, 4 from Old saves." |
+| Swap in (S2b) | "Swap in Dogtown run? The 812 saves in the game go to Main playthrough, and Dogtown run's 42 come in." With no loadout in the game yet, it asks for a name for the saves there first ("Saved on 2026-11-03" by default) |
+| Undo | **Undo the last move** in the Loadouts view's menu and in a notice after each move, for the last move or swap |
+
+#### How a move works
+
+1. **Checks first, nothing moved yet.** A move into or out of the game's folder is refused while `Cyberpunk2077.exe` runs (moves between loadouts in the library are allowed). Each source folder must still have `sav.dat`. The target must have room: on another drive, its free space is checked against the saves' sizes.
+2. **The journal.** The whole move is written to `library.json` before the first folder moves: each save's source, target and state. A folder's state turns `done` as soon as it has moved.
+3. **Each folder.** On the same drive, one rename of the whole folder, which Windows does at once and completely or not at all. On another drive, a copy of its files, each checked by size, then the source removed only after the copy checks out.
+4. **Names that clash.** A save coming into a folder that already has one of its name gets the next free number of its kind (ManualSave-12 becomes ManualSave-1001). Only the folder is renamed in S2a; whether the metadata's `name` must change too is checked in the game in S2b.
+5. **After.** The index rescans the folders that changed, and the page and side bar update.
+6. **A move cut short** (VS Code closed, power off) is finished at the next start from the journal: a folder still at its source is moved, and a half-made copy on another drive is removed while its source is still whole. Then REDsave says what it finished.
+
+Nothing in S2 deletes a save. Removing a loadout is offered only when it is empty, and **Undo** moves saves back the same way.
+
+#### The library
+
+```
+Saved Games\REDsave\               redsave.libraryPath
+  library.json                     format, the loadout in the game, the loadouts (id, name, notes,
+                                   created), the journal of the last move
+  loadouts\<id>\                   a loadout's save folders, exactly as the game wrote them
+```
+
+The index reads each loadout's folder as it reads the game's, so search, chips and details work across all of them, and a save keeps its record when it moves (a moved folder is stamped the same, so only its place changes).
+
+#### Steam Cloud (S2b)
+
+The game's folder has `steam_autocloud.vdf`. Before the first swap or move out of the game's folder on a PC with it, REDsave explains once: the saves are kept in REDsave's library, and Steam's cloud copy follows what is in the game's folder. S2b's test checks what Steam really does, on the dev PC with one throwaway save: make a manual save, move it out, start the game through Steam, and see whether Steam brings it back, asks about a conflict, or leaves it gone. If Steam brings saves back, swaps would leave copies in the game's folder (no loss, but not what a swap means), and S2b stops there to agree a fix with the owner.
+
+#### Open questions for S2
+
+| Question | Recommendation |
+|---|---|
+| Split S2 into S2a (Move, on a copy) and S2b (Swap, the real folder)? | Yes: the move rules are proven before the real saves are moved |
+| Moves between loadouts while the game runs | Allowed; only moves into or out of the game's folder wait for the game to close |
+| A loadout with saves: remove it? | No; offer **Move all to...** first. A loadout can be removed only when empty |
+| The test copy for S2a | Claude copies 60 saves (all kinds, three playthroughs) from the real folder into a test folder, reading the real one only |
+
 ### Later: copies by hard link
 
 A research item, not scheduled (the owner, 2026-11-03: build with Move only, keep this in the notes). A copy of a save in a second loadout could be a set of hard links to the same files, so it takes no extra space, as EDGEdeck deploys mods by hard link.
