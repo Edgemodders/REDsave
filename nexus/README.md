@@ -10,11 +10,9 @@ The source of REDsave's Nexus Mods page lives here, so updates are edits in the 
 
 ## The page
 
-There is no page yet (`"page": null`). Before the first release the owner makes it by hand on Nexus with the form below, then:
+The page is [37205](https://www.nexusmods.com/cyberpunk2077/mods/37205), made by the owner on 2026-11-03 (mod id 14315126034773 in `nexus.json`). It has no files yet. Pulled the same day, its description was still Nexus's template for a new page, so `description.bbcode` keeps REDsave's own draft. The pull's fingerprint of the template is in `nexus.json`, which lets the first release push the draft over it.
 
-1. Put its number in `nexus.json` as `"page"`.
-2. `npm run nexus:pull -- --ids-only` (needs the owner's Nexus key; see REDnode's `nexus/README.md` for where it is kept on the dev PC).
-3. From then on the Release workflow's **Update Nexus Mods** box uploads each release: the zip as the main file (the first one on a new page, then a new version with the old one archived), the version's changelog, and `description.bbcode`.
+From the first release on, the Release workflow's **Update Nexus Mods** box uploads each release: the zip as the main file (the first one on a new page, then a new version with the old one archived), the version's changelog, and `description.bbcode`. It stops first if the description was edited on Nexus since the last pull: then `npm run nexus:pull`, merge with `git diff nexus/`, commit, and run it again.
 
 ## The Nexus form
 
