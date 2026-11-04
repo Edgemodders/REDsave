@@ -43,11 +43,15 @@ interface LibraryFile {
 
 export const defaultLibraryPath = (home = os.homedir()) => path.join(home, "Saved Games", "REDsave");
 
-/** Whether one folder is the other or inside it, case-insensitively as Windows paths are. */
+/**
+ * Whether one folder is the other or inside it, case-insensitively as Windows paths are. Windows'
+ * path rules always (REDsave runs on Windows; the Check workflow runs the tests on Linux).
+ */
 export function within(inner: string, outer: string): boolean {
-  const a = path.resolve(inner).toLowerCase();
-  const b = path.resolve(outer).toLowerCase();
-  return a === b || a.startsWith(b.endsWith(path.sep) ? b : b + path.sep);
+  const w = path.win32;
+  const a = w.resolve(inner).toLowerCase();
+  const b = w.resolve(outer).toLowerCase();
+  return a === b || a.startsWith(b.endsWith(w.sep) ? b : b + w.sep);
 }
 
 export class Library {
