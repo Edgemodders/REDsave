@@ -20,6 +20,7 @@ Last updated 2026-11-03.
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
+| [S3b Titles](#s3b-titles) | By hand, in the game | S3b | | To run (REDsave 0.0.12) |
 | [S3a Title spike](#s3a-title-spike) | By hand, in the game | S3a | 2026-11-03 | Pass: copy A's plain-text title shows in Load Game; the original and both copies load and play |
 | [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | 2026-11-03 | Pass, 3 steps |
 | [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Pass: part A (steps 0 to 7) and part B (Steam Cloud quiet, a renumbered save loads) |
@@ -29,7 +30,7 @@ Last updated 2026-11-03.
 
 | Build | Test |
 |---|---|
-| None | |
+| REDsave 0.0.12 (S3b Titles) | [S3b Titles](#s3b-titles) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -50,6 +51,7 @@ npm test
 | `test/search.test.ts` | Parsing the box, words (any case and accents), chips (one key any value, two keys both, minus), playthrough numbers, ranges, dates, quests, facts, chip counts, sort, titles without names, game versions newest first, turning chips on and off |
 | `test/index.test.ts` | The index's cache: each save read once, read again when changed, dropped when removed |
 | `test/swap.test.ts` | Empty save folders as free names, a swap without renaming the names that leave and its undo (the game's own files left alone, the loadout in the game set and put back), a swap that stops partway (the loadout in the game unchanged), a swap cut short finished at the next start |
+| `test/titles.test.ts` | A title in `trackedQuest` and the game's own in `userName` with one backup and the file's time kept, a second title keeping the game's own, a reset giving back the game's file byte for byte, a foreign `userName` left alone, `titleProblem`, REDsave showing and finding titles and quests' own names, `titled:` |
 | `test/titlespike.test.ts` | One metadata field changed with every other byte kept (LF, no final newline, `60.0`, escaped quotes), the two copies made beside the original with the next free numbers and the original untouched, a plain-text title shown by REDsave |
 | `test/move.test.ts` | The library (make, rename, notes, remove only when empty), nested folders kept apart, the next free number, plans (saves already there, taken names), a move by rename (every file, the files' times, the journal on disk), a move by copy (checked, times kept, the source removed after), no move while the game runs (but between loadouts), none when a save has gone, never overwriting, a move cut short finished, undo (old names first, new numbers for names taken since, no undo of an undo) |
 
@@ -219,3 +221,17 @@ REDsave 0.0.11, in the game, on your real save folder (both path settings empty)
 After the run, tell Claude what copies A and B showed in Load Game, and whether they loaded.
 
 **Result, 2026-11-03, REDsave 0.0.11:** copy A's new title ("<quest>: REDsave test A") showed in the game's Load Game. The original and both copies loaded and played fine. So the game takes the list from `metadata.9.json`, shows a plain-text `trackedQuest` as written, and loads a save whose metadata was changed; `userName` (copy B) shows nowhere and does no harm.
+
+### S3b Titles
+
+REDsave 0.0.12, on your real save folder (both path settings empty), with the game closed except in step 5.
+
+1. Install `redsave-0.0.12.vsix` over 0.0.11. On the Saves page, click a save you know and press **Set title...** in its details. The box starts with its quest's name and ": " (such as "Clampdown: "), with the cursor at the end. Type `Takemura alive` and press Enter. A notice says "Titled 1 save", and the save's title in the list is "Clampdown: Takemura alive". Its details show **Your title** above **Quest: Clampdown**.
+2. Type `takemura` in the search box: the titled save shows. Click the **Titled** chip under Your title (or type `titled:yes`): only it shows. Clear the search.
+3. Select three other saves (Ctrl+click), press **Add to titles...**, type `Corpo run` and press Enter. Each one's title is now "<its quest>: Corpo run".
+4. Click the first save again, **Set title...**: the box starts with its title, "Clampdown: Takemura alive". Change it to `Clampdown: before the heist` and press Enter.
+5. Start the game (**Run Game**), open **Load Game**: the four saves show their new titles. Load one of them: it loads and plays. Quit the game.
+6. Back in REDsave, select the three "Corpo run" saves and press **Reset titles**, then **Reset**: they show their quest names again. In the first save's details, press **Reset title**: it is "Clampdown" again, and the **Reset title** button is gone.
+7. While the game runs (start it, stay at the main menu), try **Set title...**: REDsave says the game is running and changes nothing. Quit the game.
+
+After the test, tell Claude which steps passed, and anything that looked wrong or unclear.

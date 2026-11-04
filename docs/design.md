@@ -309,6 +309,22 @@ What the run decides:
 
 Copy B tells whether `userName` shows anywhere (the scripts say no).
 
+### S3b: built
+
+REDsave 0.0.12, built on 2026-11-03 with the owner's agreement to the plan the same day: the save's own quest kept in its `userName`, the box starting with the quest's name and ": ", adding text to several saves at once. Awaiting the owner's hand test ([Tests](testing.html), "S3b Titles").
+
+| Where | What |
+|---|---|
+| `src/titles.ts` | `setTitle`: the title into `trackedQuest`; the first time, the game's own (its LocKey) into `userName` as `REDsave:<LocKey>` and a copy of the metadata into the library's `backups\titles`. `resetTitle`: the game's own back, `userName` empty: the file is the game's again, byte for byte. Each write changes those two fields' text only, through a temporary file, with the file's time kept exactly. A save whose `userName` holds text REDsave did not write is left alone. `titleProblem`: one line, not empty, 120 characters at most |
+| `src/metadata.ts` | `originalQuest` from `userName` |
+| `src/search.ts` | `isTitled`, `questNameOf` (the quest's own name under a title), the **Your title** chip (`titled:yes`, `titled:no`); words find a title and the quest's own name |
+| `src/extension.ts` | **Set title...** (one save; the box starts with "<quest>: ", or its title when it has one), **Add to titles...** (several: "<each one's quest>: <text>", replacing titles they have), **Reset title**; refused while the game runs; the index reads titled saves again (a title keeps the file's time) |
+| `webview/page.ts` | In a save's details, **Set title...** and **Reset title**, and a **Your title** row above the quest's own name; on the selection line, **Set title...** or **Add to titles...** and **Reset titles** |
+
+Limits: a title is plain text, so the quest's name in it stays in English (REDbridge's names) whatever the game's language. Saving over a titled save in the game makes a new save with the game's title; autosaves and quick saves are overwritten often, so titles on them do not last.
+
+Checked on 2026-11-03: 43 unit tests; on a scratch copy of a real save, a title changed two lines, kept the file's time, and a reset gave back the game's file byte for byte.
+
 ## Phases
 
 Each phase ends with a hand test by the owner.
