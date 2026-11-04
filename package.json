@@ -2,7 +2,7 @@
   "name": "redsave",
   "displayName": "REDsave",
   "description": "Save game manager for Cyberpunk 2077: search and filter your saves, keep sets of them outside the game and swap them in, and give saves your own titles.",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "publisher": "edgemodders",
   "preview": true,
   "pricing": "Free",
@@ -63,6 +63,12 @@
       }
     ],
     "commands": [
+      {
+        "command": "redsave.runGame",
+        "title": "Run Game",
+        "category": "REDsave",
+        "icon": "$(play)"
+      },
       {
         "command": "redsave.openPage",
         "title": "Open the Saves Page",
@@ -128,19 +134,24 @@
     "menus": {
       "view/title": [
         {
-          "command": "redsave.openPage",
+          "command": "redsave.runGame",
           "when": "view == redsave.saves",
           "group": "navigation@0"
         },
         {
-          "command": "redsave.refresh",
+          "command": "redsave.openPage",
           "when": "view == redsave.saves",
           "group": "navigation@1"
         },
         {
-          "command": "redsave.openSavesFolder",
+          "command": "redsave.refresh",
           "when": "view == redsave.saves",
           "group": "navigation@2"
+        },
+        {
+          "command": "redsave.openSavesFolder",
+          "when": "view == redsave.saves",
+          "group": "navigation@3"
         },
         {
           "command": "redsave.newLoadout",
@@ -248,7 +259,7 @@
         "redsave.gamePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "The Cyberpunk 2077 folder, where REDbridge reads quest and place names. Empty: EDGEdeck's when it runs, else found through Steam, GOG or Epic."
+          "markdownDescription": "The Cyberpunk 2077 folder: where REDbridge reads quest and place names, and what **Run Game** starts (when EDGEdeck is not installed). Empty: EDGEdeck's when it runs, else found through Steam, GOG or Epic."
         }
       }
     }

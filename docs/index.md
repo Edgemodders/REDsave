@@ -17,7 +17,7 @@ As of 2026-11-03. Nothing is released yet. Each phase ends with a hand test by t
 |---|---|
 | S0 Repo | Done 2026-11-03: the scaffold, the release workflow, the brand and the design |
 | S1 Find | Done 2026-11-03: search, filters, sort, groups, selection, details and names passed the hand test (0.0.4); 0.0.5's clickable help examples await a short check |
-| S2 Loadouts | S2a Library and Move done 2026-11-03 (REDsave 0.0.8); S2b Swap built 2026-11-03 (REDsave 0.0.9), awaiting its hand test, with the Steam Cloud check |
+| S2 Loadouts | S2a Library and Move done 2026-11-03 (REDsave 0.0.8); S2b Swap built 2026-11-03 (REDsave 0.0.10), awaiting its hand test, with the Steam Cloud check |
 | S3 Titles | Not started |
 | S4 First release | Not started |
 

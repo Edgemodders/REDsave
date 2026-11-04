@@ -7,14 +7,15 @@
 import * as vscode from "vscode";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { spawn } from "node:child_process";
 import { defaultSavesPath, KIND_NAMES, SaveKind } from "./saves";
 import { SaveIndex } from "./index";
 import { Names } from "./names";
-import { findGame } from "./game";
+import { findGame, launchTarget } from "./game";
 import { SavesPage } from "./page";
 import { playthroughLabel, playthroughsOf } from "./search";
 import { defaultLibraryPath, Library, within } from "./library";
-import { Place, planMove, planSwap, recover, runMove, undoPlan } from "./move";
+import { gameRunning, Place, planMove, planSwap, recover, runMove, undoPlan } from "./move";
 import type { SaveRecord } from "./metadata";
 
 const KIND_WORDS: Record<SaveKind, string> = { manual: "manual", auto: "auto", quick: "quick", pointOfNoReturn: "ponr", endGame: "endgame" };
@@ -375,6 +376,41 @@ export function activate(context: vscode.ExtensionContext): void {
     await runAndReport(plan, `Swap in ${l.name}`, true, undefined, { before, after: id }, `Swapped in ${l.name}: ${plural(plan.items.length - out, "save")} in the game${out ? `, ${out} moved to ${outName}` : ""}.`);
   }
 
+  /**
+   * Run Game, the play button in the view's title. With EDGEdeck installed, its own Run game, so its
+   * pending mod changes deploy first; else the game through Steam (a Steam copy) or its exe, with
+   * -modded, as EDGEdeck starts it. Never while saves move, never a second copy.
+   */
+  async function runGame(): Promise<void> {
+    if (busy) return void vscode.window.showWarningMessage("REDsave is moving saves. Start the game when it has finished.");
+    if (await gameRunning()) return void vscode.window.showInformationMessage("Cyberpunk 2077 is already running.");
+    const deck = vscode.extensions.getExtension("edgemodders.edgedeck");
+    if (deck) {
+      log.appendLine("Run Game: through EDGEdeck's Run game");
+      await vscode.commands.executeCommand("edgedeck.runGame");
+      return;
+    }
+    const dir = gameDir();
+    if (!dir) {
+      const b = await vscode.window.showWarningMessage("REDsave did not find the game through Steam, GOG or Epic.", "Set the game folder");
+      if (b) await vscode.commands.executeCommand("workbench.action.openSettings", "redsave.gamePath");
+      return;
+    }
+    const target = launchTarget(dir);
+    if (target.kind === "steam") {
+      log.appendLine(`Run Game: ${target.url}`);
+      await vscode.env.openExternal(vscode.Uri.parse(target.url));
+      return;
+    }
+    log.appendLine(`Run Game: ${target.exe} ${target.args.join(" ")}`);
+    const child = spawn(target.exe, target.args, { cwd: path.dirname(target.exe), detached: true, stdio: "ignore" });
+    child.on("error", (e) => {
+      log.appendLine(`Could not start the game: ${e.message}`);
+      void vscode.window.showErrorMessage(`REDsave: could not start the game. ${e.message}`);
+    });
+    child.unref();
+  }
+
   async function newLoadout(suggested?: string): Promise<string | undefined> {
     const problem = placesProblem();
     if (problem) return void vscode.window.showErrorMessage(problem);
@@ -398,6 +434,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerTreeDataProvider("redsave.saves", view),
     vscode.commands.registerCommand("redsave.openPage", (query?: string) => mainPage.show(typeof query === "string" ? query : undefined)),
     vscode.commands.registerCommand("redsave.refresh", () => scan()),
+    vscode.commands.registerCommand("redsave.runGame", () => runGame()),
     vscode.commands.registerCommand("redsave.openSavesFolder", openFolder),
     vscode.commands.registerCommand("redsave.newLoadout", async () => {
       const id = await newLoadout();

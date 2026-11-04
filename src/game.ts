@@ -43,3 +43,14 @@ export function findGame(configured?: string): string | undefined {
   ].filter((c): c is string => !!c);
   return candidates.find(isGameFolder);
 }
+
+export const gameExe = (gameDir: string) => path.join(gameDir, "bin", "x64", "Cyberpunk2077.exe");
+
+/**
+ * How Run Game starts the game, as EDGEdeck's Run game does: through Steam when the game sits in a
+ * Steam library, else its exe. Always with -modded, which loads REDmod mods and is harmless without any.
+ */
+export function launchTarget(gameDir: string): { kind: "steam"; url: string } | { kind: "exe"; exe: string; args: string[] } {
+  if (/[\\/]steamapps[\\/]common[\\/]/i.test(gameDir)) return { kind: "steam", url: "steam://run/1091500//-modded/" };
+  return { kind: "exe", exe: gameExe(gameDir), args: ["-modded"] };
+}

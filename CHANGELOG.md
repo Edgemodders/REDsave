@@ -30,3 +30,4 @@ How to keep it (the Edgemodders convention):
 - The loadout in the game is marked in the side bar and on its tab, and the saves you make while it is in belong to it.
 - Before saves first leave the game's folder on a PC where Steam Cloud syncs it, REDsave explains once what that means.
 - Empty save folders the game leaves behind no longer make REDsave give an incoming save a new folder number.
+- **Run Game**, the play button at the top of REDsave's side bar: starts Cyberpunk 2077 through Steam (or its exe for other copies) with REDmod's `-modded`, as EDGEdeck does. With EDGEdeck installed it runs EDGEdeck's Run game, so pending mod changes deploy first.

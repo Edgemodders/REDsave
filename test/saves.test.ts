@@ -4,6 +4,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { defaultSavesPath, listSaves, metadataFileOf, saveKind } from "../src/saves";
+import { launchTarget } from "../src/game";
 
 test("saveKind reads each kind of save folder and nothing else", () => {
   assert.equal(saveKind("ManualSave-12"), "manual");
@@ -44,4 +45,11 @@ test("listSaves lists save folders sorted by kind and number, and a missing fold
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("Run Game starts a Steam copy through Steam, any other through its exe, with -modded", () => {
+  assert.deepEqual(launchTarget("E:\\SteamLibrary\\steamapps\\common\\Cyberpunk 2077"), { kind: "steam", url: "steam://run/1091500//-modded/" });
+  const gog = launchTarget("D:\\GOG Games\\Cyberpunk 2077");
+  assert.equal(gog.kind, "exe");
+  assert.deepEqual(gog.kind === "exe" && gog.args, ["-modded"]);
 });
