@@ -21,14 +21,13 @@ Last updated 2026-11-03.
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
 | [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | | To run |
-| [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Part A passed (steps 0 to 7); part B (Steam Cloud, a renumbered save) to run |
+| [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Pass: part A (steps 0 to 7) and part B (Steam Cloud quiet, a renumbered save loads) |
 | [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.9 (S2b Swap) | [S2b Swap](#s2b-swap) |
 | REDsave 0.0.10 (Run Game) | [Run Game (0.0.10)](#run-game-0010) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
@@ -186,7 +185,14 @@ REDsave 0.0.9. Install `redsave-0.0.9.vsix` over 0.0.8. Part A runs on the test 
 
 After the test, tell Claude which steps passed, and what you noted in steps 10 to 12.
 
-**Part A, 2026-11-03, REDsave 0.0.9:** steps 0 to 7 passed on the test copy. Part B waits.
+**Part A, 2026-11-03, REDsave 0.0.9:** steps 0 to 7 passed on the test copy.
+
+**Part B, 2026-11-03, REDsave 0.0.9, the real save folder:** passed. The owner moved the throwaway save (`ManualSave-1554`, 20:45) into a new loadout, Steam test, started the game through Steam, made a new save and quit, then moved the throwaway back into the game. Steam never showed a sync error or a conflict, at any step. The new save had taken the throwaway's number (`ManualSave-1554`, 20:49), so REDsave gave the throwaway `ManualSave-1555`; its metadata still says `"name": "ManualSave-1554"`, and it showed in Load Game before the new save and loaded fine. Read by Claude from REDsave's journal and the two saves' metadata afterwards (read only).
+
+| Question | Answer |
+|---|---|
+| Does Steam Cloud complain when saves leave the game's folder and come back? | No: no sync error or conflict, through two game starts |
+| Does a save load from a folder renumbered by REDsave? | Yes, with its metadata's `name` left as it was: the folder's number need not match it |
 
 ### Run Game (0.0.10)
 

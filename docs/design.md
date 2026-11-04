@@ -159,12 +159,12 @@ Decided with the owner on 2026-11-03: saves are only **moved**, so each save is 
 2. **Nothing is deleted.** Before a loadout comes in, the save folders in the game's folder go to the loadout that is in the game, or to a new one named "Saved on <date>" if none is.
 3. **Only save folders move.** The game's other files in the folder (`user.gls`, `EnabledMods.json`, `HDRUserSettings.json`, `steam_autocloud.vdf`) stay.
 4. **A journal.** Each move is written to `library.json` before it is made, so a swap cut short (power off, VS Code closed) finishes or rolls back at the next start.
-5. **Names that clash.** Saves that come into a folder (the game's or a loadout's) where a save of the same name already is get the next free number of their kind. Unverified: whether the metadata's `name` must then change to match the folder.
+5. **Names that clash.** Saves that come into a folder (the game's or a loadout's) where a save of the same name already is get the next free number of their kind. Only the folder is renamed: S2b's hand test (2026-11-03) loaded a save from `ManualSave-1555` whose metadata says `ManualSave-1554`.
 6. **Undo** the last swap or move.
 
 ### Steam Cloud
 
-The dev PC's save folder has `steam_autocloud.vdf`: Steam Cloud syncs it. Moving saves out of the folder may make Steam delete them from the cloud too, and moving them back uploads them again. Unverified: what Steam does with a folder changed while Steam runs but the game does not, and whether it asks about a conflict at the next start. S2's test checks it on the dev PC before any release. Until then REDsave says, at the first swap on a PC with Steam Cloud, that the saves are kept in REDsave's library and Steam's cloud copy follows the game's folder. GOG Galaxy's cloud saves are the same question (unverified).
+The dev PC's save folder has `steam_autocloud.vdf`: Steam Cloud syncs it. **Checked in S2b's hand test on 2026-11-03:** a save moved out of the folder, the game started through Steam, a new save made, the first save moved back and the game started again: Steam showed no sync error or conflict at any step. What Steam's cloud copy holds in between (whether it drops a save while it is out) is not checked; the saves themselves are always on the PC, in the game's folder or REDsave's library. Until then REDsave says, at the first swap on a PC with Steam Cloud, that the saves are kept in REDsave's library and Steam's cloud copy follows the game's folder. GOG Galaxy's cloud saves are the same question (unverified).
 
 ### S2: plan
 
@@ -194,7 +194,7 @@ The owner's approach (2026-11-03): loadouts are children of a **Loadouts** node 
 1. **Checks first, nothing moved yet.** A move into or out of the game's folder is refused while `Cyberpunk2077.exe` runs (moves between loadouts in the library are allowed). Each source folder must still have `sav.dat`. The target must have room: on another drive, its free space is checked against the saves' sizes.
 2. **The journal.** The whole move is written to `library.json` before the first folder moves: each save's source, target and state. A folder's state turns `done` as soon as it has moved.
 3. **Each folder.** On the same drive, one rename of the whole folder, which Windows does at once and completely or not at all. On another drive, a copy of its files, each checked by size, then the source removed only after the copy checks out.
-4. **Names that clash.** A save coming into a folder that already has one of its name gets the next free number of its kind (ManualSave-12 becomes ManualSave-1001). Only the folder is renamed in S2a; whether the metadata's `name` must change too is checked in the game in S2b.
+4. **Names that clash.** A save coming into a folder that already has one of its name gets the next free number of its kind (ManualSave-12 becomes ManualSave-1001). Only the folder is renamed, and that is enough: checked in the game in S2b's hand test.
 5. **After.** The index rescans the folders that changed, and the page and side bar update.
 6. **A move cut short** (VS Code closed, power off) is finished at the next start from the journal: a folder still at its source is moved, and a half-made copy on another drive is removed while its source is still whole. Then REDsave says what it finished.
 
@@ -233,7 +233,7 @@ Checked on 2026-11-03: 29 unit tests (31 with 0.0.8's); an end-to-end script on 
 
 #### S2b: built
 
-REDsave 0.0.9, built on 2026-11-03, awaiting the owner's hand test ([Tests](testing.html), "S2b Swap"): part A on the test copy, part B (Steam Cloud, a renumbered save) in the game with one throwaway save.
+REDsave 0.0.9, built on 2026-11-03, **passed the owner's hand test the same day** (both parts) ([Tests](testing.html), "S2b Swap"): part A on the test copy, part B (Steam Cloud, a renumbered save) in the game with one throwaway save.
 
 | Where | What |
 |---|---|
