@@ -287,7 +287,7 @@ The load list is drawn by `LoadListItem` (`SetMetadata`), the save menu by `Save
 
 ### S3a: the spike, built
 
-REDsave 0.0.11, built on 2026-11-03, awaiting the owner's run in the game ([Tests](testing.html), "S3a Title spike").
+REDsave 0.0.11, built on 2026-11-03; **the owner's run in the game the same day chose way A**: copy A's plain-text title showed in Load Game, and every copy loaded and played ([Tests](testing.html), "S3a Title spike").
 
 What the game's scripts say (read from the decompiled scripts beside the repos, `UI/fullscreen/pregame/loadGameMenu.swift`, not copied): Load Game fills each row in `LoadListItem.SetMetadata` from a `SaveMetadataInfo`, and its title is `SetText(m_label, metadata.trackedQuest)`. Ink resolves a LocKey given to `SetText`, so the quest's name shows in the game's language; plain text should show as written (unverified). `SaveMetadataInfo` is a native class with `trackedQuest`, `locationName`, `internalName` and the rest, but no `userName`. Unknown until the run: whether the game fills it from `metadata.9.json` or from `sav.dat`, and whether a save with a changed metadata file still loads.
 

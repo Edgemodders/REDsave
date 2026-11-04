@@ -20,7 +20,7 @@ Last updated 2026-11-03.
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
 | [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
-| [S3a Title spike](#s3a-title-spike) | By hand, in the game | S3a | | To run (REDsave 0.0.11) |
+| [S3a Title spike](#s3a-title-spike) | By hand, in the game | S3a | 2026-11-03 | Pass: copy A's plain-text title shows in Load Game; the original and both copies load and play |
 | [Run Game (0.0.10)](#run-game-0010) | By hand, with the game | S2b | 2026-11-03 | Pass, 3 steps |
 | [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | 2026-11-03 | Pass: part A (steps 0 to 7) and part B (Steam Cloud quiet, a renumbered save loads) |
 | [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
@@ -29,7 +29,7 @@ Last updated 2026-11-03.
 
 | Build | Test |
 |---|---|
-| REDsave 0.0.11 (S3a Title spike) | [S3a Title spike](#s3a-title-spike) |
+| None | |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -217,3 +217,5 @@ REDsave 0.0.11, in the game, on your real save folder (both path settings empty)
 5. In VS Code, run **REDsave: Title Spike: Put the Test Copies Away** and press **Move**: the two copies go into a loadout, Title spike. Remove it later, or keep it.
 
 After the run, tell Claude what copies A and B showed in Load Game, and whether they loaded.
+
+**Result, 2026-11-03, REDsave 0.0.11:** copy A's new title ("<quest>: REDsave test A") showed in the game's Load Game. The original and both copies loaded and played fine. So the game takes the list from `metadata.9.json`, shows a plain-text `trackedQuest` as written, and loads a save whose metadata was changed; `userName` (copy B) shows nowhere and does no harm.
