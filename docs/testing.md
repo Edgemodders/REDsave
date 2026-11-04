@@ -19,13 +19,15 @@ Last updated 2026-11-03.
 | [S1 Find hand test](#s1-find) | By hand, installed .vsix | S1 | 2026-11-03 | Pass, all 14 steps (REDsave 0.0.4) |
 | [Search help examples](#search-help-examples-005) | By hand | S1 | 2026-11-03 | Pass |
 | [S2a on a scratch copy, outside VS Code](#s2a-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2a | 2026-11-03 | Pass, 11 checks |
+| [S2b on a scratch copy, outside VS Code](#s2b-on-a-scratch-copy-outside-vs-code) | By script, on a copy | S2b | 2026-11-03 | Pass, 13 checks |
+| [S2b Swap hand test](#s2b-swap) | By hand; part B with the game | S2b | | To run (REDsave 0.0.9) |
 | [S2a Library and Move hand test](#s2a-library-and-move) | By hand | S2a | 2026-11-03 | Pass on 0.0.7 and 0.0.8 (0.0.6 stopped at step 5; an undo into a removed loadout, found in the second run, fixed in 0.0.8) |
 
 ## Waiting for a hand test
 
 | Build | Test |
 |---|---|
-| None | |
+| REDsave 0.0.9 (S2b Swap) | [S2b Swap](#s2b-swap) |
 
 The release gate: no release until every hand test of the changes since the last release has passed.
 
@@ -45,6 +47,7 @@ npm test
 | `test/metadata.test.ts` | The timestamp (time, then day.month.year), the quest id, every field of a record, missing fields left unknown, a broken metadata file |
 | `test/search.test.ts` | Parsing the box, words (any case and accents), chips (one key any value, two keys both, minus), playthrough numbers, ranges, dates, quests, facts, chip counts, sort, titles without names, game versions newest first, turning chips on and off |
 | `test/index.test.ts` | The index's cache: each save read once, read again when changed, dropped when removed |
+| `test/swap.test.ts` | Empty save folders as free names, a swap without renaming the names that leave and its undo (the game's own files left alone, the loadout in the game set and put back), a swap that stops partway (the loadout in the game unchanged), a swap cut short finished at the next start |
 | `test/move.test.ts` | The library (make, rename, notes, remove only when empty), nested folders kept apart, the next free number, plans (saves already there, taken names), a move by rename (every file, the files' times, the journal on disk), a move by copy (checked, times kept, the source removed after), no move while the game runs (but between loadouts), none when a save has gone, never overwriting, a move cut short finished, undo (old names first, new numbers for names taken since, no undo of an undo) |
 
 The tests use made-up metadata (`test/fixture.ts`), never a player's saves.
@@ -72,6 +75,17 @@ Run on 2026-11-03 with a scratch script bundling `src/library.ts`, `src/move.ts`
 | 5 saves to a library on E: | Copied, each `sav.dat` checked by size, 46 ms; their sources gone; undo copied them back |
 | A move cut short (journal "running" with 3 saves left) | Finished at the next start |
 | Every save accounted for | 60 of 60 |
+
+### S2b on a scratch copy, outside VS Code
+
+Run on 2026-11-03 on a copy of the 60 test saves in a scratch folder, with `user.gls`, `steam_autocloud.vdf` and three empty save folders added as the real folder has them:
+
+| Check | Result |
+|---|---|
+| Swap in a loadout of 20 with no loadout in the game | 60 moved in 97 ms (40 out to "Saved on", 20 in), none renamed; the game's own files stayed |
+| A save made while that loadout is in | Stays with it: the next swap took 21 out |
+| Swap the other loadout back in, then undo | 61 moved in 94 ms; the undo put everything back, set the loadout in the game back, renamed nothing |
+| Every save accounted for | 61 of 61 |
 
 ## Hand tests
 
@@ -144,3 +158,28 @@ Check for 0.0.8, on the library as the second run left it:
 3. To put your real saves back where they were: in each of the two loadouts' tabs, press **Select all**, then **Move to...** > **In the game** > **Move** (with the game closed). In the game has every save again, and REDsave's library is empty. Then remove the two empty loadouts.
 
 **Result, 2026-11-03, REDsave 0.0.8:** steps 1 and 2 passed: Street Kid came back with its 22 saves. Step 3 was skipped by choice: the owner keeps both loadouts (Street Kid, 22 saves; Corpo Male V Saves, 53) with their real saves in REDsave's library for now. **S2a is done.**
+
+### S2b Swap
+
+REDsave 0.0.9. Install `redsave-0.0.9.vsix` over 0.0.8. Part A runs on the test copy; part B uses the game and one throwaway save in your real save folder.
+
+**Part A: swaps, on the test copy.** In VS Code's settings set **REDsave: Saves Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\saves` and **REDsave: Library Path** to `C:\Users\VYRAL\Saved Games\REDsave-test\library`.
+
+0. Check the settings took: open the **Saves page**; its bottom line must start with `C:\Users\VYRAL\Saved Games\REDsave-test\saves` and say 60 saves, and **Loadouts** in the side bar must say "none yet" (your real library has Street Kid and Corpo Male V Saves: seeing them means the Library Path is not in effect). If either is wrong, stop and tell Claude.
+1. Make a loadout `Dogtown run`, and with **Add saves...** add the 13 `gender:male` saves to it.
+2. Right-click **Dogtown run**, **Swap In**. REDsave asks a name for the 47 saves in the game, with `Saved on 2026-11-03` filled in: press Enter. The question says "Swap in Dogtown run?", that the 47 saves in the game go to Saved on 2026-11-03, and that Dogtown run's 13 saves come into the game's folder. Press **Swap in**. A notice says "Swapped in Dogtown run: 13 saves in the game, 47 moved to Saved on 2026-11-03."
+3. In the side bar: **In the game** says "13 · Dogtown run"; Dogtown run says "13 · in the game" with a filled dot; Saved on 2026-11-03 says 47. Dogtown run's tab shows its 13 saves and **In the game** in its header, with no Swap in button.
+4. Open **Saved on 2026-11-03** and press **Swap in** in its tab's header. The question says the 13 saves in the game go to Dogtown run and its 47 come in: **Swap in**. In the game says "47 · Saved on 2026-11-03".
+5. Right-click **Loadouts**, **Undo the Last Move**: "Undo: Swap in Saved on 2026-11-03?", **Undo**. In the game says "13 · Dogtown run" again, and Saved on 2026-11-03 has 47.
+6. On the **Saves page**, select one save in Saved on 2026-11-03 and press **Move to loadout...**: the list shows **In the game** with "Dogtown run" in its description, and Dogtown run is not listed a second time. Choose In the game, **Move**: Dogtown run (in the game) has 14.
+7. Clear both settings. The bottom line of the Saves page shows your real save folder again.
+
+**Part B: Steam Cloud and a renumbered save, with the game and your real save folder.** It needs about 12 to 16 GB of RAM. Your two loadouts (Street Kid, Corpo Male V Saves) hold 75 real saves outside the game's folder: Steam Cloud may drop its cloud copies of them when the game starts (part B finds out what it does). To avoid that, move them back into the game first with **Move all to...**; otherwise leave them.
+
+8. Start the game through Steam, load any save, make a new manual save (the throwaway), and quit. In Steam's library, wait until the game's cloud status is up to date.
+9. In REDsave, **Refresh**. The throwaway is the newest save on the Saves page: note its folder name (its details, Kind: ManualSave-N). Select it, **Move to loadout...**, **New loadout...** `Steam test`, **Move**. Before it moves, REDsave says once that Steam Cloud syncs the game's folder: press **Continue**.
+10. Start the game through Steam again. Note anything Steam shows (a cloud conflict, a sync message) and whether the game's **Load Game** lists the throwaway. Make one more manual save, then quit.
+11. In REDsave, **Refresh**. Note: is the throwaway back in the game's folder (Steam put it back), or only in Steam test? Is the new save's folder name the same as the throwaway's?
+12. Move the throwaway from Steam test back **In the game**. If its name is taken now (step 11), the question says it gets a new folder number. Start the game, and **load the throwaway** from Load Game: note whether it loads, and its title in the list. Quit.
+
+After the test, tell Claude which steps passed, and what you noted in steps 10 to 12.

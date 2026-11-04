@@ -231,6 +231,18 @@ The owner's hand test (2026-11-03) found that an undo into a removed loadout put
 
 Checked on 2026-11-03: 29 unit tests (31 with 0.0.8's); an end-to-end script on a scratch copy of the 60 test saves (13 saves moved by rename in 28 ms, 5 copied to a library on E: in 46 ms and back by undo, a move cut short finished, all 60 saves accounted for); the loadout tab and its picker in headless Chrome.
 
+#### S2b: built
+
+REDsave 0.0.9, built on 2026-11-03, awaiting the owner's hand test ([Tests](testing.html), "S2b Swap"): part A on the test copy, part B (Steam Cloud, a renumbered save) in the game with one throwaway save.
+
+| Where | What |
+|---|---|
+| `src/move.ts` | `planSwap`: the game's saves out to the loadout they belong to, then the loadout's in, as one plan; incoming names checked against the game's folder as it will be once the outgoing saves have left. A journal records the loadout in the game before and after (`inGame`), set when the move completes, kept as it was when a move stops, set by recovery when a cut swap is finished, and put back by undo. Undo runs in reverse order and does not count names held by saves it moves away, so a swap's undo renames nothing. Empty save folders (the game leaves them) are free names: `moveFolder` removes an empty folder in the way with rmdir |
+| `src/extension.ts` | **Swap In** (the loadout's menu and its tab): asks a name for the game's saves when no loadout is in the game ("Saved on <date>"), one question with the counts, then the swap. The loadout in the game owns the saves in the game's folder: its count and tab show them, a move to it goes to the game's folder, and **Move to...** lists it once, as In the game. The Steam Cloud notice, once, before saves first leave a folder with `steam_autocloud.vdf` |
+| `webview/page.ts` | A loadout's tab shows **In the game** or **Swap in** in its header |
+
+Checked on 2026-11-03: 35 unit tests (4 for swaps: empty folders, a swap and its undo, a swap that stops, a swap cut short); an end-to-end script on a scratch copy of the test saves with the game's own files and three empty save folders (a swap of 60 in 97 ms with none renamed, a save made while a loadout is in staying with it, a swap back, its undo, 61 of 61 saves accounted for).
+
 #### Decided for S2
 
 Agreed with the owner on 2026-11-03, with the tree and tab approach above:
